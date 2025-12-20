@@ -11,6 +11,7 @@ defmodule TwentyDollarClubWeb.Router do
     resources "/users", UserController, except: [:new, :edit]
     resources "/memberships", MembershipController, except: [:new, :edit]
     resources "/beneficiaries", BeneficiaryController, except: [:new, :edit]
+    resources "/projects", ProjectController, except: [:new, :edit]
   end
 
   # Enable LiveDashboard in development
