@@ -10,6 +10,7 @@ defmodule TwentyDollarClub.Users.User do
     field :email, :string
     field :phone_number, :string
     field :gender, :string
+    has_one :membership, TwentyDollarClub.Memberships.Membership
 
     timestamps(type: :utc_datetime)
   end

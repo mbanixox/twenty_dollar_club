@@ -7,7 +7,10 @@ defmodule TwentyDollarClub.Memberships.Membership do
   schema "memberships" do
     field :generated_id, :integer
     field :role, :string
-    field :user_id, :binary_id
+    belongs_to :user, TwentyDollarClub.Users.User
+    has_many :beneficiaries, TwentyDollarClub.Beneficiaries.Beneficiary
+    has_many :projects, TwentyDollarClub.Projects.Project
+    has_many :contributions , TwentyDollarClub.Contributions.Contribution
 
     timestamps(type: :utc_datetime)
   end

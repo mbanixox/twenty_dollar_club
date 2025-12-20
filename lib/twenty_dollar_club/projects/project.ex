@@ -10,7 +10,8 @@ defmodule TwentyDollarClub.Projects.Project do
     field :status, :string
     field :goal_amount, :decimal
     field :funded_amount, :decimal
-    field :membership_id, :binary_id
+    belongs_to :membership, TwentyDollarClub.Memberships.Membership
+    has_many :project_contributions, TwentyDollarClub.ProjectContributions.ProjectContribution
 
     timestamps(type: :utc_datetime)
   end

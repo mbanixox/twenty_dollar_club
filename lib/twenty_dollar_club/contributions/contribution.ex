@@ -7,7 +7,7 @@ defmodule TwentyDollarClub.Contributions.Contribution do
   schema "contributions" do
     field :transaction_reference, :string
     field :payment_method, :string
-    field :membership_id, :binary_id
+    belongs_to :membership, TwentyDollarClub.Memberships.Membership
 
     timestamps(type: :utc_datetime)
   end

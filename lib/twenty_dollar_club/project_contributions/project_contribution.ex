@@ -7,7 +7,7 @@ defmodule TwentyDollarClub.ProjectContributions.ProjectContribution do
   schema "project_contributions" do
     field :total_amount_funded, :decimal
     field :goal_amount, :decimal
-    field :project_id, :binary_id
+    belongs_to :project, TwentyDollarClub.Projects.Project
 
     timestamps(type: :utc_datetime)
   end

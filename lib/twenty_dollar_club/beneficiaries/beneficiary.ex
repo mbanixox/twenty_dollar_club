@@ -7,7 +7,7 @@ defmodule TwentyDollarClub.Beneficiaries.Beneficiary do
   schema "beneficiaries" do
     field :beneficiary_name, :string
     field :relationship, :string
-    field :membership_id, :binary_id
+    belongs_to :membership, TwentyDollarClub.Memberships.Membership
 
     timestamps(type: :utc_datetime)
   end
