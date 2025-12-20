@@ -9,7 +9,8 @@ defmodule TwentyDollarClubWeb.Router do
     pipe_through :api
 
     resources "/users", UserController, except: [:new, :edit]
-
+    resources "/memberships", MembershipController, except: [:new, :edit]
+    resources "/beneficiaries", BeneficiaryController, except: [:new, :edit]
   end
 
   # Enable LiveDashboard in development
