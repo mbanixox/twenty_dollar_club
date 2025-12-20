@@ -1,5 +1,10 @@
 import Config
 
+# Load .env file
+if config_env() != :prod do
+  DotenvParser.load_file(".env")
+end
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration
@@ -16,8 +21,31 @@ import Config
 #
 # Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
 # script that automatically sets the env var above.
+
 if System.get_env("PHX_SERVER") do
   config :twenty_dollar_club, TwentyDollarClubWeb.Endpoint, server: true
+end
+
+if config_env() == :dev do
+  config :twenty_dollar_club, TwentyDollarClubWeb.Endpoint,
+    # Binding to loopback ipv4 address prevents access from other machines.
+    # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
+    http: [ip: {127, 0, 0, 1}],
+    check_origin: false,
+    code_reloader: true,
+    debug_errors: true,
+    secret_key_base: System.get_env("SECRET_KEY_BASE"),
+    watchers: []
+
+  config :twenty_dollar_club, TwentyDollarClub.Repo,
+    username: System.get_env("POSTGRES_USER"),
+    password: System.get_env("POSTGRES_PASSWORD"),
+    hostname: "localhost",
+    database: System.get_env("POSTGRES_DB"),
+    port: String.to_integer(System.get_env("POSTGRES_PORT")),
+    stacktrace: true,
+    show_sensitive_data_on_connection_error: true,
+    pool_size: 10
 end
 
 config :twenty_dollar_club, TwentyDollarClubWeb.Endpoint,

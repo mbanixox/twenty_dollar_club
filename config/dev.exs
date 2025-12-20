@@ -1,30 +1,11 @@
 import Config
 
-# Configure your database
-config :twenty_dollar_club, TwentyDollarClub.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "twenty_dollar_club_dev",
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
-
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
-config :twenty_dollar_club, TwentyDollarClubWeb.Endpoint,
-  # Binding to loopback ipv4 address prevents access from other machines.
-  # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}],
-  check_origin: false,
-  code_reloader: true,
-  debug_errors: true,
-  secret_key_base: "Qb+PZ+Ko4LRbc+aXJG+lJpuOF4U08KKh2IW+x7MIDHg4LP5a1VeWBx5qVxiEVkso",
-  watchers: []
 
 # ## SSL Support
 #
