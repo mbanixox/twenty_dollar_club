@@ -6,11 +6,12 @@ defmodule TwentyDollarClub.Memberships.Membership do
   @foreign_key_type :binary_id
   schema "memberships" do
     field :generated_id, :integer
-    field :role, :string
+    field :role, Ecto.Enum, values: [:member, :admin], default: :member
     belongs_to :user, TwentyDollarClub.Users.User
     has_many :beneficiaries, TwentyDollarClub.Beneficiaries.Beneficiary
     has_many :projects, TwentyDollarClub.Projects.Project
-    has_many :contributions , TwentyDollarClub.Contributions.Contribution
+    has_many :contributions, TwentyDollarClub.Contributions.Contribution
+    belongs_to :project_contribution, TwentyDollarClub.ProjectContributions.ProjectContribution
 
     timestamps(type: :utc_datetime)
   end

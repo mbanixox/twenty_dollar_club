@@ -7,11 +7,11 @@ defmodule TwentyDollarClub.Projects.Project do
   schema "projects" do
     field :title, :string
     field :description, :string
-    field :status, :string
+    field :status, Ecto.Enum, values: [:active, :completed, :paused], default: :active
     field :goal_amount, :decimal
     field :funded_amount, :decimal
     belongs_to :membership, TwentyDollarClub.Memberships.Membership
-    has_many :project_contributions, TwentyDollarClub.ProjectContributions.ProjectContribution
+    has_one :project_contributions, TwentyDollarClub.ProjectContributions.ProjectContribution
 
     timestamps(type: :utc_datetime)
   end

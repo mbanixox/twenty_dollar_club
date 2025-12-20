@@ -7,6 +7,7 @@ defmodule TwentyDollarClub.Contributions.Contribution do
   schema "contributions" do
     field :transaction_reference, :string
     field :payment_method, :string
+    field :amount, :decimal
     belongs_to :membership, TwentyDollarClub.Memberships.Membership
 
     timestamps(type: :utc_datetime)
@@ -15,7 +16,7 @@ defmodule TwentyDollarClub.Contributions.Contribution do
   @doc false
   def changeset(contribution, attrs) do
     contribution
-    |> cast(attrs, [:transaction_reference, :payment_method])
-    |> validate_required([:transaction_reference, :payment_method])
+    |> cast(attrs, [:transaction_reference, :payment_method, :amount])
+    |> validate_required([:transaction_reference, :payment_method, :amount])
   end
 end
