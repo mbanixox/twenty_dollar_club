@@ -37,6 +37,30 @@ defmodule TwentyDollarClub.Users do
   """
   def get_user!(id), do: Repo.get!(User, id)
 
+
+  @doc """
+  Gets a single user by email.
+
+  Returns 'nil' if the User does not exist.
+
+  ## Examples
+
+      iex> get_user_by_email(test@test.com)
+      %User{}
+
+      iex> get_user_by_email(nonexistent@test.com)
+      nil
+
+  """
+  def get_user_by_email(email) do
+    User
+    |> where(email: ^email)
+    |> Repo.one()
+  end
+
+
+
+
   @doc """
   Creates a user.
 
