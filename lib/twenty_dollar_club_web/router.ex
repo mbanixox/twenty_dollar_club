@@ -2,13 +2,13 @@ defmodule TwentyDollarClubWeb.Router do
   use TwentyDollarClubWeb, :router
   use Plug.ErrorHandler
 
-  defp handle_errors(conn, %{reason: %Phoenix.Router.NoRouteError{message: message}}) do
+  def handle_errors(conn, %{reason: %Phoenix.Router.NoRouteError{message: message}}) do
     conn
     |> json(%{errors: message})
     |> halt()
   end
 
-  defp handle_errors(conn, %{reason: %{message: message}}) do
+  def handle_errors(conn, %{reason: %{message: message}}) do
     conn
     |> json(%{errors: message})
     |> halt()
@@ -43,6 +43,7 @@ defmodule TwentyDollarClubWeb.Router do
     pipe_through [:api, :auth]
 
     get "/users/by_id/:id", UserController, :show
+    post "/users/sign_out", UserController, :sign_out
     post "/users/update", UserController, :update
     delete "/users/delete/:id", UserController, :delete
   end
