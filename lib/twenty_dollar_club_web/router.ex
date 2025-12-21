@@ -18,18 +18,33 @@ defmodule TwentyDollarClubWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :auth do
+    plug TwentyDollarClubWeb.Auth.Pipeline
+  end
+
+
   scope "/api", TwentyDollarClubWeb do
     pipe_through :api
 
+    post "/users/create", UserController, :create
     post "/users/sign_in", UserController, :sign_in
-    resources "/users", UserController, except: [:new, :edit]
-    # post "/users/create", UserController, :create
-    resources "/memberships", MembershipController, except: [:new, :edit]
-    resources "/beneficiaries", BeneficiaryController, except: [:new, :edit]
-    resources "/projects", ProjectController, except: [:new, :edit]
-    resources "/contributions", ContributionController, except: [:new, :edit]
-    resources "/project_contributions", ProjectContributionController, except: [:new, :edit]
+
+    # resources "/users", UserController, except: [:new, :edit]
+    # resources "/memberships", MembershipController, except: [:new, :edit]
+    # resources "/beneficiaries", BeneficiaryController, except: [:new, :edit]
+    # resources "/projects", ProjectController, except: [:new, :edit]
+    # resources "/contributions", ContributionController, except: [:new, :edit]
+    # resources "/project_contributions", ProjectContributionController, except: [:new, :edit]
   end
+
+  scope "/api", TwentyDollarClubWeb do
+    pipe_through [:api, :auth]
+
+    get "/users/by_id/:id", UserController, :show
+    # other authenticated routes can go here
+  end
+
+
 
   # Enable LiveDashboard in development
   if Application.compile_env(:twenty_dollar_club, :dev_routes) do

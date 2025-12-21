@@ -14,18 +14,20 @@ defmodule TwentyDollarClubWeb.Auth.Guardian do
   alias TwentyDollarClub.Users
 
   def subject_for_token(%{id: id}, _claims) do
-    subject = to_string(id)
-    {:ok, subject}
+    sub = to_string(id)
+    {:ok, sub}
   end
 
   def subject_for_token(_, _) do
     {:error, :no_id_provided}
   end
 
-  def resource_from_claims(%{"subject" => id}) do
+  def resource_from_claims(%{"sub" => id}) do
     case Users.get_user!(id) do
-      nil -> {:error, :not_found}
-      resource -> {:ok, resource}
+      nil ->
+        {:error, :not_found}
+      resource ->
+        {:ok, resource}
     end
   end
 
