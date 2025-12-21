@@ -1,10 +1,51 @@
 defmodule TwentyDollarClubWeb.UserController do
+  @moduledoc """
+  Handles user-related actions such as listing, creating, updating,
+  and deleting users.
+
+  ## Authorization
+
+  The `is_authorized_account/2` plug is used to ensure that only the
+  owner of an account can update or delete their user record.
+
+  ### How `is_authorized_account/2` Works
+
+  - This plug is invoked before the `update` and `delete` actions.
+  - It fetches the user from the database using the `id` provided in
+    the request parameters.
+  - It compares the `id` of the currently authenticated user
+    (from `conn.assigns.user`) with the `id` of the user being accessed.
+  - If the IDs match, the request proceeds.
+  - If they do not match, it raises a `Forbidden` error, preventing
+    unauthorized access.
+
+  This ensures that users can only modify or delete their own accounts.
+  """
+
   use TwentyDollarClubWeb, :controller
 
   alias TwentyDollarClub.{Users, Users.User, Memberships, Memberships.Membership}
   alias TwentyDollarClubWeb.{Auth.Guardian, Auth.ErrorResponse}
 
+  plug :is_authorized_account when action in [:update, :delete]
+
   action_fallback TwentyDollarClubWeb.FallbackController
+
+  defp is_authorized_account(conn, _opts) do
+    user_id =
+      case conn.params do
+        %{"user" => %{"id" => id}} -> id
+        %{"id" => id} -> id
+      end
+
+    user = Users.get_user!(user_id)
+
+    if conn.assigns.user.id == user.id do
+      conn
+    else
+      raise ErrorResponse.Forbidden
+    end
+  end
 
   def index(conn, _params) do
     users = Users.list_users()
@@ -30,7 +71,8 @@ defmodule TwentyDollarClubWeb.UserController do
         |> put_status(:ok)
         |> render(:show, user: user, token: token)
 
-      {:error, :unauthorized} -> raise ErrorResponse.Unauthorized, message: "Invalid email or password"
+      {:error, :unauthorized} ->
+        raise ErrorResponse.Unauthorized, message: "Invalid email or password"
     end
   end
 
@@ -39,8 +81,8 @@ defmodule TwentyDollarClubWeb.UserController do
     render(conn, :show, user: user)
   end
 
-  def update(conn, %{"id" => id, "user" => user_params}) do
-    user = Users.get_user!(id)
+  def update(conn, %{"user" => user_params}) do
+    user = Users.get_user!(user_params["id"])
 
     with {:ok, %User{} = user} <- Users.update_user(user, user_params) do
       render(conn, :show, user: user)

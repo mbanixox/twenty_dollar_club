@@ -43,6 +43,8 @@ defmodule TwentyDollarClubWeb.Router do
     pipe_through [:api, :auth]
 
     get "/users/by_id/:id", UserController, :show
+    post "/users/update", UserController, :update
+    delete "/users/delete/:id", UserController, :delete
   end
 
 
