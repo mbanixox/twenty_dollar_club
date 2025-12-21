@@ -29,6 +29,7 @@ defmodule TwentyDollarClub.Users.User do
       :gender
     ])
     |> unique_constraint(:email)
+    |> unique_constraint(:phone_number)
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
     |> validate_length(:email, max: 160)
     |> put_hashed_password()
