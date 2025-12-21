@@ -52,6 +52,7 @@ defmodule TwentyDollarClub.MixProject do
       {:bandit, "~> 1.5"},
       {:dotenv_parser, "~> 2.0"},
       {:guardian, "~> 2.4"},
+      {:guardian_db, "~> 3.0"},
       {:pbkdf2_elixir, "~> 2.3"}
     ]
   end

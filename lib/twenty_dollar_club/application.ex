@@ -15,6 +15,7 @@ defmodule TwentyDollarClub.Application do
       # Start a worker by calling: TwentyDollarClub.Worker.start_link(arg)
       # {TwentyDollarClub.Worker, arg},
       # Start to serve requests, typically the last entry
+      Guardian.DB.Sweeper,
       TwentyDollarClubWeb.Endpoint
     ]
 

@@ -35,6 +35,12 @@ config :twenty_dollar_club, TwentyDollarClubWeb.Auth.Guardian,
   issuer: "twenty_dollar_club",
   secret_key: "qOD9gdl1Q2bQ4VgIz0PxXJwcs6iXi2Ty1ULTfjvXwieN1myPaCL3yAvVIiT3XaEc"
 
+# Configure Guardian DB
+config :guardian, Guardian.DB,
+  repo: TwentyDollarClub.Repo,
+  schema_name: "guardian_tokens",
+  sweep_interval: 60
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
