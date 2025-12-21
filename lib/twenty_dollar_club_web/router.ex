@@ -1,5 +1,18 @@
 defmodule TwentyDollarClubWeb.Router do
   use TwentyDollarClubWeb, :router
+  use Plug.ErrorHandler
+
+  defp handle_errors(conn, %{reason: %Phoenix.Router.NoRouteError{message: message}}) do
+    conn
+    |> json(%{errors: message})
+    |> halt()
+  end
+
+  defp handle_errors(conn, %{reason: %{message: message}}) do
+    conn
+    |> json(%{errors: message})
+    |> halt()
+  end
 
   pipeline :api do
     plug :accepts, ["json"]
@@ -8,6 +21,7 @@ defmodule TwentyDollarClubWeb.Router do
   scope "/api", TwentyDollarClubWeb do
     pipe_through :api
 
+    post "/users/sign_in", UserController, :sign_in
     resources "/users", UserController, except: [:new, :edit]
     # post "/users/create", UserController, :create
     resources "/memberships", MembershipController, except: [:new, :edit]

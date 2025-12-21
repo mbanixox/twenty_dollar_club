@@ -46,12 +46,12 @@ defmodule TwentyDollarClubWeb.Auth.Guardian do
     end
   end
 
-  def validate_password(password, hashed_password) do
+  defp validate_password(password, hashed_password) do
     Pbkdf2.verify_pass(password, hashed_password)
   end
 
   defp create_token(user) do
     {:ok, token, _claims} = encode_and_sign(user)
-    token
+    {:ok, user, token}
   end
 end

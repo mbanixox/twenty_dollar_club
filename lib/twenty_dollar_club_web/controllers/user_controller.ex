@@ -1,11 +1,8 @@
 defmodule TwentyDollarClubWeb.UserController do
   use TwentyDollarClubWeb, :controller
 
-  alias TwentyDollarClub.Users
-  alias TwentyDollarClub.Users.User
-  alias TwentyDollarClubWeb.Auth.Guardian
-  alias TwentyDollarClub.Memberships
-  alias TwentyDollarClub.Memberships.Membership
+  alias TwentyDollarClub.{Users, Users.User, Memberships, Memberships.Membership}
+  alias TwentyDollarClubWeb.{Auth.Guardian, Auth.ErrorResponse}
 
   action_fallback TwentyDollarClubWeb.FallbackController
 
@@ -22,6 +19,17 @@ defmodule TwentyDollarClubWeb.UserController do
       |> put_status(:created)
       |> put_resp_header("location", ~p"/api/users/#{user}")
       |> render(:show, user: user, token: token)
+    end
+  end
+
+  def sign_in(conn, %{"email" => email, "hashed_password" => hashed_password}) do
+    case Guardian.authenticate(email, hashed_password) do
+      {:ok, user, token} ->
+        conn
+        |> put_status(:ok)
+        |> render(:show, user: user, token: token)
+
+      {:error, :unauthorized} -> raise ErrorResponse.Unauthorized, message: "Invalid email or password"
     end
   end
 
