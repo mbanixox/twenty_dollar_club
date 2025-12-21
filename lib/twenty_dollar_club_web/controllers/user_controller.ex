@@ -3,6 +3,9 @@ defmodule TwentyDollarClubWeb.UserController do
 
   alias TwentyDollarClub.Users
   alias TwentyDollarClub.Users.User
+  alias TwentyDollarClubWeb.Auth.Guardian
+  alias TwentyDollarClub.Memberships
+  alias TwentyDollarClub.Memberships.Membership
 
   action_fallback TwentyDollarClubWeb.FallbackController
 
@@ -12,11 +15,13 @@ defmodule TwentyDollarClubWeb.UserController do
   end
 
   def create(conn, %{"user" => user_params}) do
-    with {:ok, %User{} = user} <- Users.create_user(user_params) do
+    with {:ok, %User{} = user} <- Users.create_user(user_params),
+         {:ok, token, _claims} <- Guardian.encode_and_sign(user),
+         {:ok, %Membership{} = _membership} <- Memberships.create_membership(user, user_params) do
       conn
       |> put_status(:created)
       |> put_resp_header("location", ~p"/api/users/#{user}")
-      |> render(:show, user: user)
+      |> render(:show, user: user, token: token)
     end
   end
 

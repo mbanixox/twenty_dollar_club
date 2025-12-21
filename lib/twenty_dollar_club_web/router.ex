@@ -9,6 +9,7 @@ defmodule TwentyDollarClubWeb.Router do
     pipe_through :api
 
     resources "/users", UserController, except: [:new, :edit]
+    # post "/users/create", UserController, :create
     resources "/memberships", MembershipController, except: [:new, :edit]
     resources "/beneficiaries", BeneficiaryController, except: [:new, :edit]
     resources "/projects", ProjectController, except: [:new, :edit]

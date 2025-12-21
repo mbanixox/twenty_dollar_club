@@ -11,6 +11,13 @@ defmodule TwentyDollarClubWeb.UserJSON do
   @doc """
   Renders a single user.
   """
+  def show(%{user: user, token: token}) do
+    %{
+      data: data(user),
+      token: token
+    }
+  end
+
   def show(%{user: user}) do
     %{data: data(user)}
   end

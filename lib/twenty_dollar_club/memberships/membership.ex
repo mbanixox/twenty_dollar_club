@@ -20,6 +20,6 @@ defmodule TwentyDollarClub.Memberships.Membership do
   def changeset(membership, attrs) do
     membership
     |> cast(attrs, [:generated_id, :role])
-    |> validate_required([:generated_id, :role])
+    |> validate_required([:role])
   end
 end
