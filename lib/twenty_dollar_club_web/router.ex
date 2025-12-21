@@ -16,10 +16,12 @@ defmodule TwentyDollarClubWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :fetch_session
   end
 
   pipeline :auth do
     plug TwentyDollarClubWeb.Auth.Pipeline
+    plug TwentyDollarClubWeb.Auth.SetUser
   end
 
 
@@ -41,7 +43,6 @@ defmodule TwentyDollarClubWeb.Router do
     pipe_through [:api, :auth]
 
     get "/users/by_id/:id", UserController, :show
-    # other authenticated routes can go here
   end
 
 

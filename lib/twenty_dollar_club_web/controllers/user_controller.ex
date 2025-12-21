@@ -26,6 +26,7 @@ defmodule TwentyDollarClubWeb.UserController do
     case Guardian.authenticate(email, hashed_password) do
       {:ok, user, token} ->
         conn
+        |> Plug.Conn.put_session(:user_id, user.id)
         |> put_status(:ok)
         |> render(:show, user: user, token: token)
 
