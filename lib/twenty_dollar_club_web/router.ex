@@ -24,7 +24,6 @@ defmodule TwentyDollarClubWeb.Router do
     plug TwentyDollarClubWeb.Auth.SetUser
   end
 
-
   scope "/api", TwentyDollarClubWeb do
     pipe_through :api
 
@@ -43,12 +42,13 @@ defmodule TwentyDollarClubWeb.Router do
     pipe_through [:api, :auth]
 
     get "/users/by_id/:id", UserController, :show
+    get "/users/refresh_session", UserController, :refresh_session
+
     post "/users/sign_out", UserController, :sign_out
     post "/users/update", UserController, :update
+
     delete "/users/delete/:id", UserController, :delete
   end
-
-
 
   # Enable LiveDashboard in development
   if Application.compile_env(:twenty_dollar_club, :dev_routes) do

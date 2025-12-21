@@ -47,23 +47,38 @@ defmodule TwentyDollarClubWeb.UserController do
     end
   end
 
+  @doc """
+  Lists all users.
+  """
   def index(conn, _params) do
     users = Users.list_users()
     render(conn, :index, users: users)
   end
 
+  @doc """
+  Creates a new user and associated membership.
+
+  Expects user parameters in the request body. On success, authenticates the user
+  and returns a session token.
+  """
   def create(conn, %{"user" => user_params}) do
     with {:ok, %User{} = user} <- Users.create_user(user_params),
-         {:ok, token, _claims} <- Guardian.encode_and_sign(user),
          {:ok, %Membership{} = _membership} <- Memberships.create_membership(user, user_params) do
-      conn
-      |> put_status(:created)
-      |> put_resp_header("location", ~p"/api/users/#{user}")
-      |> render(:show, user: user, token: token)
+      authorize_user(conn, user.email, user_params["hashed_password"])
     end
   end
 
+  @doc """
+  Authenticates a user and returns a session token.
+
+  Expects `email` and `hashed_password` in the request body.
+  """
   def sign_in(conn, %{"email" => email, "hashed_password" => hashed_password}) do
+    authorize_user(conn, email, hashed_password)
+  end
+
+  # Helper function to authenticate a user and set session
+  defp authorize_user(conn, email, hashed_password) do
     case Guardian.authenticate(email, hashed_password) do
       {:ok, user, token} ->
         conn
@@ -76,6 +91,26 @@ defmodule TwentyDollarClubWeb.UserController do
     end
   end
 
+  @doc """
+  Refreshes the user's session token.
+
+  Decodes and verifies the current token, then issues a new token if valid.
+  """
+  def refresh_session(conn, %{}) do
+    token = Guardian.Plug.current_token(conn)
+    {:ok, user, new_token} = Guardian.authenticate(token)
+
+    conn
+    |> Plug.Conn.put_session(:user_id, user.id)
+    |> put_status(:ok)
+    |> render(:show, user: user, token: new_token)
+  end
+
+  @doc """
+  Signs out the user and revokes their session token.
+
+  Clears the session and returns the user with a `nil` token.
+  """
   def sign_out(conn, %{}) do
     user = conn.assigns[:user]
     token = Guardian.Plug.current_token(conn)
@@ -87,11 +122,20 @@ defmodule TwentyDollarClubWeb.UserController do
     |> render(:show, user: user, token: nil)
   end
 
+  @doc """
+  Shows a user by ID.
+  """
   def show(conn, %{"id" => id}) do
     user = Users.get_user!(id)
     render(conn, :show, user: user)
   end
 
+  @doc """
+  Updates a user's information.
+
+  Only the account owner can update their information. Expects user parameters
+  including the `id` in the request body.
+  """
   def update(conn, %{"user" => user_params}) do
     user = Users.get_user!(user_params["id"])
 
@@ -100,6 +144,9 @@ defmodule TwentyDollarClubWeb.UserController do
     end
   end
 
+  @doc """
+  Deletes a user account.
+  """
   def delete(conn, %{"id" => id}) do
     user = Users.get_user!(id)
 
