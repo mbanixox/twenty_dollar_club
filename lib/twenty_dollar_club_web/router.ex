@@ -53,6 +53,30 @@ defmodule TwentyDollarClubWeb.Router do
     get "/memberships", MembershipController, :index
     patch "/memberships/update", MembershipController, :update
     delete "/memberships/delete", MembershipController, :delete
+
+    get "/membership/beneficiaries", BeneficiaryController, :index
+    post "/membership/beneficiaries", BeneficiaryController, :create
+    get "/membership/beneficiaries/:id", BeneficiaryController, :show
+    patch "/membership/beneficiaries/:id", BeneficiaryController, :update
+    delete "/membership/beneficiaries/:id", BeneficiaryController, :delete
+
+    get "/membership/projects", ProjectController, :index
+    post "/membership/projects", ProjectController, :create
+    get "/membership/projects/:id", ProjectController, :show
+    patch "/membership/projects/:id", ProjectController, :update
+    delete "/membership/projects/:id", ProjectController, :delete
+
+    get "/membership/contributions", ContributionController, :index
+    post "/membership/contributions", ContributionController, :create
+    get "/membership/contributions/:id", ContributionController, :show
+    patch "/membership/contributions/:id", ContributionController, :update
+    delete "/membership/contributions/:id", ContributionController, :delete
+
+    get "/project/contributions", ProjectContributionController, :index
+    post "/project/contributions", ProjectContributionController, :create
+    get "/project/contributions/:id", ProjectContributionController, :show
+    patch "/project/contributions/:id", ProjectContributionController, :update
+    delete "/project/contributions/:id", ProjectContributionController, :delete
   end
 
   # Enable LiveDashboard in development
