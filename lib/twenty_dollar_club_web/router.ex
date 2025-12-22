@@ -19,9 +19,14 @@ defmodule TwentyDollarClubWeb.Router do
     plug :fetch_session
   end
 
-  pipeline :auth do
+  pipeline :user_auth do
     plug TwentyDollarClubWeb.Auth.Pipeline
     plug TwentyDollarClubWeb.Auth.SetUser
+  end
+
+  pipeline :membership_auth do
+    plug TwentyDollarClubWeb.Auth.Pipeline
+    plug TwentyDollarClubWeb.Auth.SetMembership
   end
 
   scope "/api", TwentyDollarClubWeb do
@@ -32,14 +37,18 @@ defmodule TwentyDollarClubWeb.Router do
   end
 
   scope "/api", TwentyDollarClubWeb do
-    pipe_through [:api, :auth]
+    pipe_through [:api, :user_auth]
 
-    get "/users/refresh_session", UserController, :refresh_session
-
+    get "/users", UserController, :index
     get "/users/by_id/:id", UserController, :show
+    get "/users/refresh_session", UserController, :refresh_session
     post "/users/sign_out", UserController, :sign_out
     patch "/users/update", UserController, :update
     delete "/users/delete", UserController, :delete
+  end
+
+  scope "/api", TwentyDollarClubWeb do
+    pipe_through [:api, :membership_auth]
 
     get "/memberships", MembershipController, :index
     patch "/memberships/update", MembershipController, :update

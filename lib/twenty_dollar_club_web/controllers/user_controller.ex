@@ -48,8 +48,13 @@ defmodule TwentyDollarClubWeb.UserController do
   defp authorize_user(conn, email, hashed_password) do
     case Guardian.authenticate(email, hashed_password) do
       {:ok, user, token} ->
+        # Ensure membership is preloaded
+        user = TwentyDollarClub.Users.get_user_with_membership!(user.id)
+        membership_id = user.membership && user.membership.id
+
         conn
         |> Plug.Conn.put_session(:user_id, user.id)
+        |> Plug.Conn.put_session(:membership_id, membership_id)
         |> put_status(:ok)
         |> render(:show, user: user, token: token)
 
