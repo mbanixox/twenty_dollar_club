@@ -51,7 +51,6 @@ defmodule TwentyDollarClub.Memberships do
   def create_membership(user, attrs) do
     membership_attrs =
       attrs
-      |> Map.put_new("generated_id", generate_membership_id())
       |> Map.put_new("role", "member")
 
     user
@@ -105,9 +104,5 @@ defmodule TwentyDollarClub.Memberships do
   """
   def change_membership(%Membership{} = membership, attrs \\ %{}) do
     Membership.changeset(membership, attrs)
-  end
-
-  defp generate_membership_id do
-    :rand.uniform(999_999_999)
   end
 end

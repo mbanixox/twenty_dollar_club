@@ -19,7 +19,20 @@ defmodule TwentyDollarClub.Memberships.Membership do
   @doc false
   def changeset(membership, attrs) do
     membership
-    |> cast(attrs, [:generated_id, :role])
-    |> validate_required([:role])
+    |> cast(attrs, [:role])
+    |> put_generated_id()
+    |> validate_required([:role, :generated_id])
+    |> unique_constraint(:generated_id)
+  end
+
+  defp put_generated_id(changeset) do
+    case get_field(changeset, :generated_id) do
+      nil -> put_change(changeset, :generated_id, generate_membership_id())
+      _ -> changeset
+    end
+  end
+
+  defp generate_membership_id() do
+    :rand.uniform(999_999_999)
   end
 end

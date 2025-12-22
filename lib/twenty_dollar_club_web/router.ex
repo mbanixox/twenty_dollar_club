@@ -41,6 +41,7 @@ defmodule TwentyDollarClubWeb.Router do
     patch "/users/update", UserController, :update
     delete "/users/delete", UserController, :delete
 
+    get "/memberships", MembershipController, :index
     patch "/memberships/update", MembershipController, :update
     delete "/memberships/delete", MembershipController, :delete
   end
