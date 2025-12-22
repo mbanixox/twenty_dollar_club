@@ -29,25 +29,20 @@ defmodule TwentyDollarClubWeb.Router do
 
     post "/users/create", UserController, :create
     post "/users/sign_in", UserController, :sign_in
-
-    # resources "/users", UserController, except: [:new, :edit]
-    # resources "/memberships", MembershipController, except: [:new, :edit]
-    # resources "/beneficiaries", BeneficiaryController, except: [:new, :edit]
-    # resources "/projects", ProjectController, except: [:new, :edit]
-    # resources "/contributions", ContributionController, except: [:new, :edit]
-    # resources "/project_contributions", ProjectContributionController, except: [:new, :edit]
   end
 
   scope "/api", TwentyDollarClubWeb do
     pipe_through [:api, :auth]
 
-    get "/users/by_id/:id", UserController, :show
     get "/users/refresh_session", UserController, :refresh_session
 
+    get "/users/by_id/:id", UserController, :show
     post "/users/sign_out", UserController, :sign_out
-    post "/users/update", UserController, :update
+    patch "/users/update", UserController, :update
+    delete "/users/delete", UserController, :delete
 
-    delete "/users/delete/:id", UserController, :delete
+    patch "/memberships/update", MembershipController, :update
+    delete "/memberships/delete", MembershipController, :delete
   end
 
   # Enable LiveDashboard in development

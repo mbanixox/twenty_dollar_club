@@ -2,24 +2,6 @@ defmodule TwentyDollarClubWeb.UserController do
   @moduledoc """
   Handles user-related actions such as listing, creating, updating,
   and deleting users.
-
-  ## Authorization
-
-  The `is_authorized_account/2` plug is used to ensure that only the
-  owner of an account can update or delete their user record.
-
-  ### How `is_authorized_account/2` Works
-
-  - This plug is invoked before the `update` and `delete` actions.
-  - It fetches the user from the database using the `id` provided in
-    the request parameters.
-  - It compares the `id` of the currently authenticated user
-    (from `conn.assigns.user`) with the `id` of the user being accessed.
-  - If the IDs match, the request proceeds.
-  - If they do not match, it raises a `Forbidden` error, preventing
-    unauthorized access.
-
-  This ensures that users can only modify or delete their own accounts.
   """
 
   use TwentyDollarClubWeb, :controller
@@ -27,25 +9,10 @@ defmodule TwentyDollarClubWeb.UserController do
   alias TwentyDollarClub.{Users, Users.User, Memberships, Memberships.Membership}
   alias TwentyDollarClubWeb.{Auth.Guardian, Auth.ErrorResponse}
 
-  plug :is_authorized_account when action in [:update, :delete]
+  import TwentyDollarClubWeb.Auth.AuthorizedPlug
+  plug :is_authorized when action in [:update, :delete]
 
   action_fallback TwentyDollarClubWeb.FallbackController
-
-  defp is_authorized_account(conn, _opts) do
-    user_id =
-      case conn.params do
-        %{"user" => %{"id" => id}} -> id
-        %{"id" => id} -> id
-      end
-
-    user = Users.get_user!(user_id)
-
-    if conn.assigns.user.id == user.id do
-      conn
-    else
-      raise ErrorResponse.Forbidden
-    end
-  end
 
   @doc """
   Lists all users.
@@ -133,11 +100,12 @@ defmodule TwentyDollarClubWeb.UserController do
   @doc """
   Updates a user's information.
 
-  Only the account owner can update their information. Expects user parameters
-  including the `id` in the request body.
+  Expects `id` and user parameters in the request body.
+
+  Only the account owner can update their information.
   """
   def update(conn, %{"user" => user_params}) do
-    user = Users.get_user!(user_params["id"])
+    user = conn.assigns.user
 
     with {:ok, %User{} = user} <- Users.update_user(user, user_params) do
       render(conn, :show, user: user)
@@ -146,9 +114,11 @@ defmodule TwentyDollarClubWeb.UserController do
 
   @doc """
   Deletes a user account.
+
+  Expects `id` in the request body.
   """
-  def delete(conn, %{"id" => id}) do
-    user = Users.get_user!(id)
+  def delete(conn, _params) do
+    user = conn.assigns.user
 
     with {:ok, %User{}} <- Users.delete_user(user) do
       send_resp(conn, :no_content, "")
