@@ -37,6 +37,12 @@ defmodule TwentyDollarClub.Users do
   """
   def get_user!(id), do: Repo.get!(User, id)
 
+  def get_user_with_membership!(id) do
+    User
+    |> where(id: ^id)
+    |> preload(:membership)
+    |> Repo.one!()
+  end
 
   @doc """
   Gets a single user by email.
@@ -57,9 +63,6 @@ defmodule TwentyDollarClub.Users do
     |> where(email: ^email)
     |> Repo.one()
   end
-
-
-
 
   @doc """
   Creates a user.
