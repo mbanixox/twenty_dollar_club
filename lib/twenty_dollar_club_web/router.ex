@@ -62,16 +62,13 @@ defmodule TwentyDollarClubWeb.Router do
     delete "/memberships/delete", MembershipController, :delete
 
     get "/membership/beneficiaries", BeneficiaryController, :index
-    post "/membership/beneficiaries", BeneficiaryController, :create
+    post "/membership/beneficiaries/create", BeneficiaryController, :create
     get "/membership/beneficiaries/:id", BeneficiaryController, :show
     patch "/membership/beneficiaries/:id", BeneficiaryController, :update
     delete "/membership/beneficiaries/:id", BeneficiaryController, :delete
 
     get "/membership/projects", ProjectController, :index
-    post "/membership/projects", ProjectController, :create
     get "/membership/projects/:id", ProjectController, :show
-    patch "/membership/projects/:id", ProjectController, :update
-    delete "/membership/projects/:id", ProjectController, :delete
 
     get "/membership/contributions", ContributionController, :index
     post "/membership/contributions", ContributionController, :create
@@ -86,10 +83,14 @@ defmodule TwentyDollarClubWeb.Router do
     delete "/project/contributions/:id", ProjectContributionController, :delete
   end
 
-  scope "/api", TwentyDollarClubWeb do
+  scope "/api/admin", TwentyDollarClubWeb do
     pipe_through [:api, :admin_auth]
 
     patch "/memberships/update", MembershipController, :update
+
+    post "/projects/create", ProjectController, :create
+    patch "/projects/:id", ProjectController, :update
+    delete "/projects/:id", ProjectController, :delete
   end
 
   # Enable LiveDashboard in development

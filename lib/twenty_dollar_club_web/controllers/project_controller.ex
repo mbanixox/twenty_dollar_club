@@ -4,6 +4,9 @@ defmodule TwentyDollarClubWeb.ProjectController do
   alias TwentyDollarClub.Projects
   alias TwentyDollarClub.Projects.Project
 
+  import TwentyDollarClubWeb.Auth.AuthorizedPlug
+  plug :is_authorized_admin when action in [:create, :update, :delete]
+
   action_fallback TwentyDollarClubWeb.FallbackController
 
   def index(conn, _params) do
@@ -15,7 +18,6 @@ defmodule TwentyDollarClubWeb.ProjectController do
     with {:ok, %Project{} = project} <- Projects.create_project(project_params) do
       conn
       |> put_status(:created)
-      |> put_resp_header("location", ~p"/api/projects/#{project}")
       |> render(:show, project: project)
     end
   end
