@@ -1,24 +1,40 @@
 defmodule TwentyDollarClubWeb.Auth.AuthorizedPlug do
   @moduledoc """
-  Provides a plug for enforcing user authorization on sensitive actions.
+  Provides plugs for enforcing user, member, and admin authorization on sensitive actions.
 
-  The `is_authorized/2` plug ensures that only the owner of a resource
-  (such as a user account) can perform certain actions (like update or delete).
+  ## Functions
 
-  ## How it works
+  - `is_authorized_user/2`:
+    Ensures that only the owner of a user resource can perform certain
+    actions (like update or delete).
+    - If the user ID is nested under `"user"` in the params (e.g., `update`),
+      checks if `conn.assigns.user.id` matches `params["id"]`.
+    - If the user ID is at the top level in the params (e.g., `delete`),
+      checks if `conn.assigns.user.id` matches `id`.
+    - Raises `Forbidden` if the IDs do not match.
 
-  - For actions where the user ID is nested under `"user"` in the params (e.g., `update`):
-    - Checks if `conn.assigns.user.id` matches `params["id"]`.
-  - For actions where the user ID is at the top level in the params (e.g., `delete`):
-    - Checks if `conn.assigns.user.id` matches `id`.
+  - `is_authorized_member/2`:
+    Ensures that only the owner of a membership resource can perform
+    certain actions.
+    - If the membership ID is nested under `"membership"` in the params,
+      checks if `conn.assigns.user.membership.id` matches `params["id"]`.
+    - If the membership ID is at the top level in the params, checks
+      if `conn.assigns.user.membership.id` matches `id`.
+    - Raises `Forbidden` if the IDs do not match.
 
-  If the IDs do not match, it raises a `Forbidden` error, preventing unauthorized access.
+  - `is_authorized_admin/2`:
+    Ensures that only users with the admin role can perform admin-level actions.
+    - Checks if `conn.assigns.user.membership.role == :admin`.
+    - Raises `Forbidden` if the user is not an admin.
 
   ## Usage
 
-      plug :is_authorized when action in [:update, :delete]
+      plug :is_authorized_user when action in [:update, :delete]
+      plug :is_authorized_member when action in [:delete]
+      plug :is_authorized_admin when action in [:update]
 
-  This plug should be used in controllers to restrict access to actions that should only be performed by the resource owner.
+  Use these plugs in controllers to restrict access to actions that
+  should only be performed by the resource owner or an admin.
   """
 
   alias TwentyDollarClubWeb.Auth.ErrorResponse
@@ -39,7 +55,6 @@ defmodule TwentyDollarClubWeb.Auth.AuthorizedPlug do
     end
   end
 
-
   def is_authorized_member(%{params: %{"membership" => params}} = conn, _opts) do
     if conn.assigns.user.membership.id == params["id"] do
       conn
@@ -56,10 +71,11 @@ defmodule TwentyDollarClubWeb.Auth.AuthorizedPlug do
     end
   end
 
-
-
-
-
-
-
+  def is_authorized_admin(conn, _opts) do
+    if conn.assigns.user.membership.role == :admin do
+      conn
+    else
+      raise ErrorResponse.Forbidden
+    end
+  end
 end

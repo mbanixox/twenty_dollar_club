@@ -30,6 +30,13 @@ defmodule TwentyDollarClubWeb.Router do
     plug TwentyDollarClubWeb.Auth.SetMembership
   end
 
+  pipeline :admin_auth do
+    plug TwentyDollarClubWeb.Auth.Pipeline
+    plug TwentyDollarClubWeb.Auth.SetUser
+    plug TwentyDollarClubWeb.Auth.SetMembership
+    plug TwentyDollarClubWeb.Auth.SetAdmin
+  end
+
   scope "/api", TwentyDollarClubWeb do
     pipe_through :api
 
@@ -52,7 +59,6 @@ defmodule TwentyDollarClubWeb.Router do
     pipe_through [:api, :membership_auth]
 
     get "/memberships", MembershipController, :index
-    patch "/memberships/update", MembershipController, :update
     delete "/memberships/delete", MembershipController, :delete
 
     get "/membership/beneficiaries", BeneficiaryController, :index
@@ -78,6 +84,12 @@ defmodule TwentyDollarClubWeb.Router do
     get "/project/contributions/:id", ProjectContributionController, :show
     patch "/project/contributions/:id", ProjectContributionController, :update
     delete "/project/contributions/:id", ProjectContributionController, :delete
+  end
+
+  scope "/api", TwentyDollarClubWeb do
+    pipe_through [:api, :admin_auth]
+
+    patch "/memberships/update", MembershipController, :update
   end
 
   # Enable LiveDashboard in development
