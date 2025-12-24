@@ -23,7 +23,7 @@ defmodule TwentyDollarClubWeb.Auth.AuthorizedPlug do
 
   alias TwentyDollarClubWeb.Auth.ErrorResponse
 
-  def is_authorized(%{params: %{"user" => params}} = conn, _opts) do
+  def is_authorized_user(%{params: %{"user" => params}} = conn, _opts) do
     if conn.assigns.user.id == params["id"] do
       conn
     else
@@ -31,7 +31,7 @@ defmodule TwentyDollarClubWeb.Auth.AuthorizedPlug do
     end
   end
 
-  def is_authorized(%{params: %{"id" => id}} = conn, _opts) do
+  def is_authorized_user(%{params: %{"id" => id}} = conn, _opts) do
     if conn.assigns.user.id == id do
       conn
     else
@@ -40,7 +40,7 @@ defmodule TwentyDollarClubWeb.Auth.AuthorizedPlug do
   end
 
 
-  def is_authorized(%{params: %{"membership" => params}} = conn, _opts) do
+  def is_authorized_member(%{params: %{"membership" => params}} = conn, _opts) do
     if conn.assigns.user.membership.id == params["id"] do
       conn
     else
@@ -48,7 +48,7 @@ defmodule TwentyDollarClubWeb.Auth.AuthorizedPlug do
     end
   end
 
-  def is_authorized(%{params: %{"id" => id}} = conn, _opts) do
+  def is_authorized_member(%{params: %{"id" => id}} = conn, _opts) do
     if conn.assigns.user.membership.id == id do
       conn
     else

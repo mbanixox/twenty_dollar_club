@@ -5,7 +5,7 @@ defmodule TwentyDollarClubWeb.MembershipController do
   alias TwentyDollarClub.Memberships.Membership
 
   import TwentyDollarClubWeb.Auth.AuthorizedPlug
-  plug :is_authorized when action in [:update, :delete]
+  plug :is_authorized_member when action in [:update, :delete]
 
   action_fallback TwentyDollarClubWeb.FallbackController
 

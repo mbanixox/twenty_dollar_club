@@ -26,6 +26,7 @@ defmodule TwentyDollarClubWeb.Router do
 
   pipeline :membership_auth do
     plug TwentyDollarClubWeb.Auth.Pipeline
+    plug TwentyDollarClubWeb.Auth.SetUser
     plug TwentyDollarClubWeb.Auth.SetMembership
   end
 

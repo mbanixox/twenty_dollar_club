@@ -10,7 +10,7 @@ defmodule TwentyDollarClubWeb.UserController do
   alias TwentyDollarClubWeb.{Auth.Guardian, Auth.ErrorResponse}
 
   import TwentyDollarClubWeb.Auth.AuthorizedPlug
-  plug :is_authorized when action in [:update, :delete]
+  plug :is_authorized_user when action in [:update, :delete]
 
   action_fallback TwentyDollarClubWeb.FallbackController
 
