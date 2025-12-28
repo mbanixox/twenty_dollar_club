@@ -48,6 +48,14 @@ if config_env() == :dev do
     pool_size: 10
 end
 
+config :twenty_dollar_club, :mpesa,
+  base_url: System.get_env("MPESA_BASE_URL") || "https://sandbox.safaricom.co.ke",
+  consumer_key: System.get_env("MPESA_CONSUMER_KEY"),
+  consumer_secret: System.get_env("MPESA_CONSUMER_SECRET"),
+  shortcode: System.get_env("MPESA_SHORTCODE"),
+  passkey: System.get_env("MPESA_PASSKEY"),
+  callback_url: System.get_env("MPESA_CALLBACK_URL")
+
 config :twenty_dollar_club, TwentyDollarClubWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 

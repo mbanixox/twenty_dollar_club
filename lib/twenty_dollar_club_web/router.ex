@@ -14,6 +14,12 @@ defmodule TwentyDollarClubWeb.Router do
     |> halt()
   end
 
+  def handle_errors(conn, %{reason: reason}) do
+    conn
+    |> json(%{errors: Exception.message(reason)})
+    |> halt()
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
     plug :fetch_session
@@ -42,6 +48,9 @@ defmodule TwentyDollarClubWeb.Router do
 
     post "/users/create", UserController, :create
     post "/users/sign_in", UserController, :sign_in
+
+    post "/payments/membership", PaymentController, :create_membership
+    # TODO: Callback URL for M-Pesa payments
   end
 
   scope "/api", TwentyDollarClubWeb do

@@ -8,6 +8,7 @@ defmodule TwentyDollarClub.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      {Cachex, name: :mpesa_cache},
       TwentyDollarClubWeb.Telemetry,
       TwentyDollarClub.Repo,
       {DNSCluster, query: Application.get_env(:twenty_dollar_club, :dns_cluster_query) || :ignore},

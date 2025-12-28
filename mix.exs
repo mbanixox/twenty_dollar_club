@@ -53,7 +53,9 @@ defmodule TwentyDollarClub.MixProject do
       {:dotenv_parser, "~> 2.0"},
       {:guardian, "~> 2.4"},
       {:guardian_db, "~> 3.0"},
-      {:pbkdf2_elixir, "~> 2.3"}
+      {:pbkdf2_elixir, "~> 2.3"},
+      {:req, "~> 0.5"},
+      {:cachex, "~> 4.1"}
     ]
   end
 
