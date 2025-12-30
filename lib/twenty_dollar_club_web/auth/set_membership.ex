@@ -8,7 +8,6 @@ defmodule TwentyDollarClubWeb.Auth.SetMembership do
   import Plug.Conn
 
   alias TwentyDollarClubWeb.Auth.ErrorResponse
-  alias TwentyDollarClub.Memberships
 
   @doc """
   Initializes options for the plug. No options are used.
@@ -25,19 +24,13 @@ defmodule TwentyDollarClubWeb.Auth.SetMembership do
     if conn.assigns[:membership] do
       conn
     else
-      membership_id = get_session(conn, :membership_id)
+      user = conn.assigns[:user]
 
-      if membership_id == nil, do: raise(ErrorResponse.Unauthorized)
-
-      membership = Memberships.get_membership!(membership_id)
-
-      cond do
-        membership_id && membership ->
-          assign(conn, :membership, membership)
-
-        true ->
-          assign(conn, :membership, nil)
+      if user == nil or user.membership == nil do
+        raise ErrorResponse.Unauthorized
       end
+
+      assign(conn, :membership, user.membership)
     end
   end
 end

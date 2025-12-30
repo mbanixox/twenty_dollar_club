@@ -55,7 +55,8 @@ defmodule TwentyDollarClub.MixProject do
       {:guardian_db, "~> 3.0"},
       {:pbkdf2_elixir, "~> 2.3"},
       {:req, "~> 0.5"},
-      {:cachex, "~> 4.1"}
+      {:cachex, "~> 4.1"},
+      {:corsica, "~> 2.1"}
     ]
   end
 

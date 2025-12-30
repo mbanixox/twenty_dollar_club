@@ -50,11 +50,8 @@ defmodule TwentyDollarClubWeb.UserController do
       {:ok, user, token} ->
         # Ensure membership is preloaded
         user = TwentyDollarClub.Users.get_user_with_membership!(user.id)
-        membership_id = user.membership && user.membership.id
 
         conn
-        |> Plug.Conn.put_session(:user_id, user.id)
-        |> Plug.Conn.put_session(:membership_id, membership_id)
         |> put_status(:ok)
         |> render(:show, user: user, token: token)
 
@@ -73,7 +70,6 @@ defmodule TwentyDollarClubWeb.UserController do
     {:ok, user, new_token} = Guardian.authenticate(token)
 
     conn
-    |> Plug.Conn.put_session(:user_id, user.id)
     |> put_status(:ok)
     |> render(:show, user: user, token: new_token)
   end
@@ -89,7 +85,6 @@ defmodule TwentyDollarClubWeb.UserController do
     Guardian.revoke(token)
 
     conn
-    |> Plug.Conn.clear_session()
     |> put_status(:ok)
     |> render(:show, user: user, token: nil)
   end

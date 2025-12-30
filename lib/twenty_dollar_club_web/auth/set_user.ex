@@ -25,18 +25,13 @@ defmodule TwentyDollarClubWeb.Auth.SetUser do
     if conn.assigns[:user] do
       conn
     else
-      user_id = get_session(conn, :user_id)
+     case Guardian.Plug.current_resource(conn) do
+        nil ->
+          raise ErrorResponse.Unauthorized
 
-      if user_id == nil, do: raise(ErrorResponse.Unauthorized)
-
-      user = Users.get_user_with_membership!(user_id)
-
-      cond do
-        user_id && user ->
-          assign(conn, :user, user)
-
-        true ->
-          assign(conn, :user, nil)
+        user ->
+          user_with_membership = Users.get_user_with_membership!(user.id)
+          assign(conn, :user, user_with_membership)
       end
     end
   end

@@ -34,6 +34,11 @@ defmodule TwentyDollarClubWeb.Endpoint do
     plug Phoenix.Ecto.CheckRepoStatus, otp_app: :twenty_dollar_club
   end
 
+  plug Corsica,
+    origins: ["http://localhost:3000"],
+    allow_headers: ["Content-Type", "Authorization"],
+    allow_credentials: true
+
   plug Phoenix.LiveDashboard.RequestLogger,
     param_key: "request_logger",
     cookie_key: "request_logger"

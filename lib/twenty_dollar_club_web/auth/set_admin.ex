@@ -3,7 +3,6 @@ defmodule TwentyDollarClubWeb.Auth.SetAdmin do
   import Plug.Conn
 
   alias TwentyDollarClubWeb.Auth.ErrorResponse
-  alias TwentyDollarClub.Memberships
 
 
 
@@ -16,20 +15,13 @@ defmodule TwentyDollarClubWeb.Auth.SetAdmin do
     if conn.assigns[:admin] do
       conn
     else
-      membership_id = get_session(conn, :membership_id)
+      user = conn.assigns[:user]
 
-      if membership_id == nil, do: raise(ErrorResponse.Unauthorized)
-
-      membership = Memberships.get_membership!(membership_id)
-      is_admin = membership.role == :admin
-
-      cond do
-        membership_id && membership && is_admin ->
-          assign(conn, :admin, membership)
-
-        true ->
-          assign(conn, :admin, nil)
+      if user == nil or user.membership == nil or user.membership.role != :admin do
+        raise ErrorResponse.Unauthorized
       end
+
+      assign(conn, :admin, user.membership)
     end
   end
 end

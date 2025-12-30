@@ -22,7 +22,7 @@ defmodule TwentyDollarClubWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
-    plug :fetch_session
+    # plug :fetch_session
   end
 
   pipeline :user_auth do
