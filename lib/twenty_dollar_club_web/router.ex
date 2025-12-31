@@ -67,6 +67,8 @@ defmodule TwentyDollarClubWeb.Router do
   scope "/api", TwentyDollarClubWeb do
     pipe_through [:api, :membership_auth]
 
+    get "/users/with_memberships", UserController, :with_memberships
+
     get "/memberships", MembershipController, :index
     delete "/memberships/delete", MembershipController, :delete
 

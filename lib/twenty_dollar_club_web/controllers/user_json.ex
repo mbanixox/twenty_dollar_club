@@ -29,7 +29,12 @@ defmodule TwentyDollarClubWeb.UserJSON do
       last_name: user.last_name,
       email: user.email,
       phone_number: user.phone_number,
-      gender: user.gender
+      gender: user.gender,
+      membership:
+        case user.membership do
+          nil -> nil
+          membership -> TwentyDollarClubWeb.MembershipJSON.data(membership)
+        end
     }
   end
 end

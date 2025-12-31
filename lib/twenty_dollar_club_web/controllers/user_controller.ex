@@ -23,6 +23,14 @@ defmodule TwentyDollarClubWeb.UserController do
   end
 
   @doc """
+  Lists all users with their memberships.
+  """
+  def with_memberships(conn, _params) do
+    users = Users.list_users_with_memberships()
+    render(conn, :index, users: users)
+  end
+
+  @doc """
   Creates a new user and associated membership.
 
   Expects user parameters in the request body. On success, authenticates the user

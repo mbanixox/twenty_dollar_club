@@ -15,7 +15,7 @@ defmodule TwentyDollarClubWeb.MembershipJSON do
     %{data: data(membership)}
   end
 
-  defp data(%Membership{} = membership) do
+  def data(%Membership{} = membership) do
     %{
       id: membership.id,
       generated_id: membership.generated_id,

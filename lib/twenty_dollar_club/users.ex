@@ -21,6 +21,14 @@ defmodule TwentyDollarClub.Users do
     Repo.all(User)
   end
 
+  def list_users_with_memberships do
+    from(u in User,
+      join: m in assoc(u, :membership),
+      preload: [membership: m]
+    )
+    |> Repo.all()
+  end
+
   @doc """
   Gets a single user.
 
