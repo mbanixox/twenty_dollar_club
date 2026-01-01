@@ -63,7 +63,6 @@ defmodule TwentyDollarClubWeb.PaymentController do
     json(conn, %{ResultCode: 0, ResultDesc: "Accepted"})
   end
 
-
   defp get_or_create_user(email) do
     case Users.get_user_by_email(email) do
       nil ->
@@ -108,7 +107,9 @@ defmodule TwentyDollarClubWeb.PaymentController do
     })
   end
 
-  defp process_callback(%{"CheckoutRequestID" => checkout_request_id, "ResultCode" => result_code} = callback) do
+  defp process_callback(
+         %{"CheckoutRequestID" => checkout_request_id, "ResultCode" => result_code} = callback
+       ) do
     Logger.info("Processing M-Pesa callback: #{inspect(callback)}")
 
     case Contributions.get_mpesa_transaction_by_checkout_id(checkout_request_id) do
@@ -124,34 +125,57 @@ defmodule TwentyDollarClubWeb.PaymentController do
     # Payment successful
     receipt_number = get_callback_metadata(callback, "MpesaReceiptNumber")
 
-    Repo.transaction(fn ->
-      with {:ok, updated_mpesa} <- update_mpesa_success(mpesa_transaction, receipt_number, callback),
-           # Reload the contribution association after update
-           updated_mpesa <- Repo.preload(updated_mpesa, :contribution, force: true),
-           {:ok, contribution} <- complete_contribution(updated_mpesa.contribution, receipt_number),
-           {:ok, user} <- get_user_by_email(contribution.email),
-           {:ok, membership} <- create_membership_for_user(user),
-           {:ok, _contribution} <- link_contribution_to_membership(contribution, membership.id) do
-        Logger.info("Membership created successfully for user #{user.email}")
+    result =
+      Repo.transaction(fn ->
+        with {:ok, updated_mpesa} <-
+               update_mpesa_success(mpesa_transaction, receipt_number, callback),
+             # Reload the contribution association after update
+             updated_mpesa <- Repo.preload(updated_mpesa, :contribution, force: true),
+             {:ok, contribution} <-
+               complete_contribution(updated_mpesa.contribution, receipt_number),
+             {:ok, user} <- get_user_by_email(contribution.email),
+             {:ok, membership} <- create_membership_for_user(user),
+             {:ok, _contribution} <- link_contribution_to_membership(contribution, membership.id) do
+          Logger.info("Membership created successfully for user #{user.email}")
+          {:ok, user.id, membership.generated_id, user.email}
+        else
+          {:error, reason} ->
+            Logger.error("Failed to process successful payment: #{inspect(reason)}")
+            Repo.rollback(reason)
+        end
+      end)
+
+    # Broadcast AFTER transaction commits
+    case result do
+      {:ok, {:ok, user_id, membership_id, email}} ->
+        Phoenix.PubSub.broadcast(
+          TwentyDollarClub.PubSub,
+          "payment:#{email}",
+          {:membership_created, %{user_id: user_id, membership_id: membership_id}}
+        )
+
+        Logger.info("Broadcasted membership creation for #{email}")
+
+      _ ->
         :ok
-      else
-        {:error, reason} ->
-          Logger.error("Failed to process successful payment: #{inspect(reason)}")
-          Repo.rollback(reason)
-      end
-    end)
+    end
+
+    result
   end
 
   defp handle_payment_result(mpesa_transaction, _result_code, callback) do
     # Payment failed
     result_desc = callback["ResultDesc"]
 
-    with {:ok, _} <- Contributions.update_mpesa_transaction_callback(mpesa_transaction, %{
-           "result_code" => to_string(callback["ResultCode"]),
-           "result_desc" => result_desc
-         }),
+    with {:ok, _} <-
+           Contributions.update_mpesa_transaction_callback(mpesa_transaction, %{
+             "result_code" => to_string(callback["ResultCode"]),
+             "result_desc" => result_desc
+           }),
          {:ok, _} <- Contributions.fail_contribution(mpesa_transaction.contribution) do
-      Logger.info("Payment failed for contribution #{mpesa_transaction.contribution.id}: #{result_desc}")
+      Logger.info(
+        "Payment failed for contribution #{mpesa_transaction.contribution.id}: #{result_desc}"
+      )
     end
   end
 
