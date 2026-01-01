@@ -49,8 +49,8 @@ defmodule TwentyDollarClubWeb.Router do
     post "/users/create", UserController, :create
     post "/users/sign_in", UserController, :sign_in
 
-    post "/payments/membership", PaymentController, :create_membership
-    # TODO: Callback URL for M-Pesa payments
+    post "/payments/membership", PaymentController, :create_membership_mpesa
+    post "/mpesa/callback", PaymentController, :mpesa_callback
   end
 
   scope "/api", TwentyDollarClubWeb do
