@@ -6,7 +6,7 @@ defmodule TwentyDollarClubWeb.UserController do
 
   use TwentyDollarClubWeb, :controller
 
-  alias TwentyDollarClub.{Users, Users.User, Memberships, Memberships.Membership}
+  alias TwentyDollarClub.{Users, Users.User}
   alias TwentyDollarClubWeb.{Auth.Guardian, Auth.ErrorResponse}
 
   import TwentyDollarClubWeb.Auth.AuthorizedPlug
@@ -31,15 +31,14 @@ defmodule TwentyDollarClubWeb.UserController do
   end
 
   @doc """
-  Creates a new user and associated membership.
-
-  Expects user parameters in the request body. On success, authenticates the user
-  and returns a session token.
+  Creates a new user without membership.
+  User must complete payment to get membership.
   """
   def create(conn, %{"user" => user_params}) do
-    with {:ok, %User{} = user} <- Users.create_user(user_params),
-         {:ok, %Membership{} = _membership} <- Memberships.create_membership(user, user_params) do
-      authorize_user(conn, user.email, user_params["hashed_password"])
+    with {:ok, %User{} = user} <- Users.create_user(user_params) do
+      conn
+      |> put_status(:created)
+      |> render(:show, user: user, token: nil)
     end
   end
 

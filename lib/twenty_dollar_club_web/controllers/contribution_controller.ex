@@ -12,10 +12,11 @@ defmodule TwentyDollarClubWeb.ContributionController do
   end
 
   def create(conn, %{"contribution" => contribution_params}) do
-    with {:ok, %Contribution{} = contribution} <- Contributions.create_contribution(contribution_params) do
+    # This should use create_pending_contribution for contributions without membership
+    # or require membership_id in params for contributions with membership
+    with {:ok, %Contribution{} = contribution} <- Contributions.create_pending_contribution(contribution_params) do
       conn
       |> put_status(:created)
-      |> put_resp_header("location", ~p"/api/contributions/#{contribution}")
       |> render(:show, contribution: contribution)
     end
   end

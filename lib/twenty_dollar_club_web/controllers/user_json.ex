@@ -30,11 +30,16 @@ defmodule TwentyDollarClubWeb.UserJSON do
       email: user.email,
       phone_number: user.phone_number,
       gender: user.gender,
-      membership:
-        case user.membership do
-          nil -> nil
-          membership -> TwentyDollarClubWeb.MembershipJSON.data(membership)
-        end
+      membership: render_membership(user)
     }
+  end
+
+  # Handle unloaded association
+  defp render_membership(%User{membership: %Ecto.Association.NotLoaded{}}), do: nil
+  # Handle no membership
+  defp render_membership(%User{membership: nil}), do: nil
+  # Handle loaded membership
+  defp render_membership(%User{membership: membership}) do
+    TwentyDollarClubWeb.MembershipJSON.data(membership)
   end
 end
