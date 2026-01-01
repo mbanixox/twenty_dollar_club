@@ -14,7 +14,7 @@ kill_signal = 'SIGTERM'
 
 [env]
   PHX_HOST = 'twenty-dollar-club.fly.dev'
-  PORT = '8080'
+  PORT = '4000'
 
 [http_service]
   internal_port = 4000
