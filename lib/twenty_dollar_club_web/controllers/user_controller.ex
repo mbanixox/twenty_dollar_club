@@ -35,10 +35,11 @@ defmodule TwentyDollarClubWeb.UserController do
   User must complete payment to get membership.
   """
   def create(conn, %{"user" => user_params}) do
-    with {:ok, %User{} = user} <- Users.create_user(user_params) do
+    with {:ok, %User{} = user} <- Users.create_user(user_params),
+         {:ok, token, _claims} <- Guardian.encode_and_sign(user) do
       conn
       |> put_status(:created)
-      |> render(:show, user: user, token: nil)
+      |> render(:show, user: user, token: token)
     end
   end
 
