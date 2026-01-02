@@ -37,6 +37,23 @@ defmodule TwentyDollarClub.Memberships do
   def get_membership!(id), do: Repo.get!(Membership, id)
 
   @doc """
+  Gets a single membership preloaded with beneficiaries.
+
+  Raises `Ecto.NoResultsError` if the Membership does not exist.
+
+  ## Examples
+
+      iex> get_membership_with_beneficiaries!(123)
+      %Membership{beneficiaries: [%Beneficiary{}, ...]}
+
+  """
+  def get_membership_with_beneficiaries!(id) do
+    Membership
+    |> Repo.get!(id)
+    |> Repo.preload(:beneficiaries)
+  end
+
+  @doc """
   Creates a membership.
 
   ## Examples

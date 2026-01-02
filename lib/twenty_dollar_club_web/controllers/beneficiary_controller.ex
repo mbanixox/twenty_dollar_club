@@ -3,11 +3,18 @@ defmodule TwentyDollarClubWeb.BeneficiaryController do
 
   alias TwentyDollarClub.Beneficiaries
   alias TwentyDollarClub.Beneficiaries.Beneficiary
+  alias TwentyDollarClub.Memberships
 
   action_fallback TwentyDollarClubWeb.FallbackController
 
+  import TwentyDollarClubWeb.Auth.AuthorizedPlug
+  plug :is_authorized_member_with_beneficiaries when action in [:show, :update, :delete]
+
+  # Only show beneficiaries belonging to the current member
   def index(conn, _params) do
-    beneficiaries = Beneficiaries.list_beneficiaries()
+    membership_id = conn.assigns.user.membership.id
+    members = Memberships.get_membership_with_beneficiaries!(membership_id)
+    beneficiaries = members.beneficiaries
     render(conn, :index, beneficiaries: beneficiaries)
   end
 
