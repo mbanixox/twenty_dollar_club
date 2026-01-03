@@ -49,8 +49,9 @@ defmodule TwentyDollarClub.Beneficiaries do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_beneficiary(attrs) do
-    %Beneficiary{}
+  def create_beneficiary(membership, attrs) do
+    membership
+    |> Ecto.build_assoc(:beneficiaries)
     |> Beneficiary.changeset(attrs)
     |> Repo.insert()
   end

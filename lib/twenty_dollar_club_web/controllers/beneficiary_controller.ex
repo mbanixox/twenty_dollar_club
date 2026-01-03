@@ -1,6 +1,8 @@
 defmodule TwentyDollarClubWeb.BeneficiaryController do
   use TwentyDollarClubWeb, :controller
 
+  require Logger
+
   alias TwentyDollarClub.Beneficiaries
   alias TwentyDollarClub.Beneficiaries.Beneficiary
   alias TwentyDollarClub.Memberships
@@ -15,36 +17,59 @@ defmodule TwentyDollarClubWeb.BeneficiaryController do
     membership_id = conn.assigns.user.membership.id
     members = Memberships.get_membership_with_beneficiaries!(membership_id)
     beneficiaries = members.beneficiaries
+    Logger.info("Listing beneficiaries for membership_id=#{membership_id}")
     render(conn, :index, beneficiaries: beneficiaries)
   end
 
   def create(conn, %{"beneficiary" => beneficiary_params}) do
-    with {:ok, %Beneficiary{} = beneficiary} <- Beneficiaries.create_beneficiary(beneficiary_params) do
-      conn
-      |> put_status(:created)
-      |> put_resp_header("location", ~p"/api/beneficiaries/#{beneficiary}")
-      |> render(:show, beneficiary: beneficiary)
+    membership = conn.assigns.user.membership
+    preloaded_membership = Memberships.get_membership_with_beneficiaries!(membership.id)
+    membership_id = preloaded_membership.id
+
+    case Beneficiaries.create_beneficiary(preloaded_membership, beneficiary_params) do
+      {:ok, %Beneficiary{} = beneficiary} ->
+        Logger.info("Created beneficiary id=#{beneficiary.id} for membership_id=#{membership_id}")
+        conn
+        |> put_status(:created)
+        |> render(:show, beneficiary: beneficiary)
+
+      {:error, changeset} ->
+        Logger.error("Failed to create beneficiary for membership_id=#{membership_id}: #{inspect(changeset.errors)}")
+        {:error, changeset}
     end
   end
 
   def show(conn, %{"id" => id}) do
     beneficiary = Beneficiaries.get_beneficiary!(id)
+    Logger.info("Showing beneficiary id=#{id}")
     render(conn, :show, beneficiary: beneficiary)
   end
 
   def update(conn, %{"id" => id, "beneficiary" => beneficiary_params}) do
     beneficiary = Beneficiaries.get_beneficiary!(id)
 
-    with {:ok, %Beneficiary{} = beneficiary} <- Beneficiaries.update_beneficiary(beneficiary, beneficiary_params) do
-      render(conn, :show, beneficiary: beneficiary)
+    case Beneficiaries.update_beneficiary(beneficiary, beneficiary_params) do
+      {:ok, %Beneficiary{} = updated_beneficiary} ->
+        Logger.info("Updated beneficiary id=#{id}")
+        render(conn, :show, beneficiary: updated_beneficiary)
+
+      {:error, changeset} ->
+        Logger.error("Failed to update beneficiary id=#{id}: #{inspect(changeset.errors)}")
+        {:error, changeset}
     end
   end
 
   def delete(conn, %{"id" => id}) do
     beneficiary = Beneficiaries.get_beneficiary!(id)
 
-    with {:ok, %Beneficiary{}} <- Beneficiaries.delete_beneficiary(beneficiary) do
-      send_resp(conn, :no_content, "")
+    case Beneficiaries.delete_beneficiary(beneficiary) do
+      {:ok, %Beneficiary{}} ->
+        Logger.info("Deleted beneficiary id=#{id}")
+        send_resp(conn, :no_content, "")
+
+      {:error, changeset} ->
+        Logger.error("Failed to delete beneficiary id=#{id}: #{inspect(changeset.errors)}")
+        {:error, changeset}
     end
   end
 end
