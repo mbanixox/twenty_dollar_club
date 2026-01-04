@@ -15,6 +15,7 @@ defmodule TwentyDollarClub.Contributions.Contribution do
     field :contribution_type, Ecto.Enum, values: [:membership, :project], default: :membership
 
     belongs_to :membership, TwentyDollarClub.Memberships.Membership
+    belongs_to :project, TwentyDollarClub.Projects.Project
     has_one :mpesa_transaction, TwentyDollarClub.Contributions.MpesaTransaction
 
     timestamps(type: :utc_datetime)
@@ -55,5 +56,11 @@ defmodule TwentyDollarClub.Contributions.Contribution do
     contribution
     |> cast(%{}, [])
     |> put_change(:membership_id, membership_id)
+  end
+
+  def project_changeset(contribution, project_id) do
+    contribution
+    |> cast(%{}, [])
+    |> put_change(:project_id, project_id)
   end
 end

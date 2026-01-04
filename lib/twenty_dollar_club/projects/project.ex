@@ -11,6 +11,7 @@ defmodule TwentyDollarClub.Projects.Project do
     field :goal_amount, :decimal
     field :funded_amount, :decimal
     belongs_to :membership, TwentyDollarClub.Memberships.Membership
+    has_many :contributions, TwentyDollarClub.Contributions.Contribution
     has_one :project_contributions, TwentyDollarClub.ProjectContributions.ProjectContribution
 
     timestamps(type: :utc_datetime)

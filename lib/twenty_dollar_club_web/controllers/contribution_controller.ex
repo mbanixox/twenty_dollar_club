@@ -21,6 +21,26 @@ defmodule TwentyDollarClubWeb.ContributionController do
     end
   end
 
+  # def create_contribution_for_project_mpesa(conn, %{"amount" => amount, "phone" => phone}) do
+  #   Logger.info("Initiating mpesa payment for project contribution")
+
+  #   membership = conn.assigns.user.membership
+  #   with
+
+
+
+
+
+
+  # end
+
+
+
+
+
+
+
+
   def show(conn, %{"id" => id}) do
     contribution = Contributions.get_contribution!(id)
     render(conn, :show, contribution: contribution)
@@ -41,4 +61,9 @@ defmodule TwentyDollarClubWeb.ContributionController do
       send_resp(conn, :no_content, "")
     end
   end
+
+
+
+
+
 end

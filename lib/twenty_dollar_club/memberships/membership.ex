@@ -11,7 +11,6 @@ defmodule TwentyDollarClub.Memberships.Membership do
     has_many :beneficiaries, TwentyDollarClub.Beneficiaries.Beneficiary
     has_many :projects, TwentyDollarClub.Projects.Project
     has_many :contributions, TwentyDollarClub.Contributions.Contribution
-    belongs_to :project_contribution, TwentyDollarClub.ProjectContributions.ProjectContribution
 
     timestamps(type: :utc_datetime)
   end

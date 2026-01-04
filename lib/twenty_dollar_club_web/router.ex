@@ -82,7 +82,7 @@ defmodule TwentyDollarClubWeb.Router do
     get "/membership/projects", ProjectController, :index
     get "/membership/projects/:id", ProjectController, :show
 
-    post "/project/contributions", PaymentController, :create_project_mpesa
+    post "/project/contributions", PaymentController, :project_payment_mpesa
 
     get "/membership/contributions", ContributionController, :index
     post "/membership/contributions", ContributionController, :create

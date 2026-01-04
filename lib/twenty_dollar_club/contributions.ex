@@ -85,6 +85,12 @@ defmodule TwentyDollarClub.Contributions do
     |> Repo.update()
   end
 
+  def update_contribution_project(contribution, project_id) do
+    contribution
+    |> Contribution.project_changeset(project_id)
+    |> Repo.update()
+  end
+
   @doc """
   Marks a contribution as completed with transaction reference.
 
