@@ -11,7 +11,9 @@ defmodule TwentyDollarClub.Contributions do
   Returns the list of contributions.
   """
   def list_contributions do
-    Repo.all(Contribution)
+    Contribution
+    |> order_by(desc: :updated_at)
+    |> Repo.all()
   end
 
   @doc """

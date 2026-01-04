@@ -19,7 +19,13 @@ defmodule TwentyDollarClubWeb.ContributionJSON do
     %{
       id: contribution.id,
       transaction_reference: contribution.transaction_reference,
-      payment_method: contribution.payment_method
+      payment_method: contribution.payment_method,
+      status: contribution.status,
+      amount: contribution.amount,
+      description: contribution.description,
+      contribution_type: contribution.contribution_type,
+      membership_id: contribution.membership_id,
+      project_id: contribution.project_id
     }
   end
 end
