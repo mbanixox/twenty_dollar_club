@@ -12,6 +12,7 @@ defmodule TwentyDollarClub.Contributions.Contribution do
     field :description, :string
     field :phone_number, :string
     field :email, :string
+    field :contribution_type, Ecto.Enum, values: [:membership, :project], default: :membership
 
     belongs_to :membership, TwentyDollarClub.Memberships.Membership
     has_one :mpesa_transaction, TwentyDollarClub.Contributions.MpesaTransaction
@@ -30,8 +31,8 @@ defmodule TwentyDollarClub.Contributions.Contribution do
 
   def create_changeset(attrs) do
     %__MODULE__{}
-    |> cast(attrs, [:payment_method, :amount, :description, :phone_number, :email])
-    |> validate_required([:payment_method, :amount, :email])
+    |> cast(attrs, [:payment_method, :amount, :description, :phone_number, :email, :contribution_type])
+    |> validate_required([:payment_method, :amount, :email, :contribution_type])
     |> validate_number(:amount, greater_than: 0)
     |> put_change(:status, :pending)
   end

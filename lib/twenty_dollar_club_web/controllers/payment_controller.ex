@@ -19,9 +19,12 @@ defmodule TwentyDollarClubWeb.PaymentController do
   def create_membership_mpesa(conn, %{"email" => email, "phone" => phone, "amount" => amount}) do
     Logger.info("Initiating membership payment")
 
-    with {:ok, user} <- get_or_create_user(email),
-         {:ok, _} <- validate_no_membership(user),
-         {:ok, contribution} <- create_pending_contribution(email, phone, amount),
+    user = conn.assigns.user
+    contribution_type = :membership
+    description = "Membership registration"
+
+    with {:ok, _} <- Users.validate_no_membership(user),
+         {:ok, contribution} <- create_pending_contribution(email, phone, amount, description, contribution_type),
          {:ok, response} <- initiate_stk_push(phone, amount, contribution.id),
          {:ok, _mpesa_txn} <- save_mpesa_transaction(contribution.id, response.body) do
       Logger.info("STK push sent successfully ")
@@ -73,39 +76,16 @@ defmodule TwentyDollarClubWeb.PaymentController do
     json(conn, %{ResultCode: 0, ResultDesc: "Accepted"})
   end
 
-  defp get_or_create_user(email) do
-    case Users.get_user_by_email(email) do
-      nil ->
-        Logger.info("Creating new user")
-        Users.create_user(%{email: email, name: email})
 
-      user ->
-        Logger.debug("Found existing user")
-        {:ok, user}
-    end
-  end
-
-  defp validate_no_membership(user) do
-    user = Repo.preload(user, :membership)
-
-    case user.membership do
-      nil ->
-        Logger.debug("User has no active membership")
-        {:ok, user}
-      _membership ->
-        Logger.warning("User already has an active membership")
-        {:error, :already_has_membership}
-    end
-  end
-
-  defp create_pending_contribution(email, phone, amount) do
+  defp create_pending_contribution(email, phone, amount, description, contribution_type) do
     Logger.info("Creating pending contribution")
     Contributions.create_pending_contribution(%{
       payment_method: "mpesa",
       amount: amount,
-      description: "Membership registration",
+      description: description,
       phone_number: phone,
-      email: email
+      email: email,
+      contribution_type: contribution_type
     })
   end
 

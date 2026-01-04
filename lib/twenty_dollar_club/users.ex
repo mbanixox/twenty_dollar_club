@@ -4,9 +4,11 @@ defmodule TwentyDollarClub.Users do
   """
 
   import Ecto.Query, warn: false
-  alias TwentyDollarClub.Repo
 
+  alias TwentyDollarClub.Repo
   alias TwentyDollarClub.Users.User
+
+  require Logger
 
   @doc """
   Returns the list of users.
@@ -136,4 +138,18 @@ defmodule TwentyDollarClub.Users do
   def change_user(%User{} = user, attrs \\ %{}) do
     User.changeset(user, attrs)
   end
+
+  def validate_no_membership(user) do
+    user = Repo.preload(user, :membership)
+
+    case user.membership do
+      nil ->
+        Logger.debug("User has no active membership")
+        {:ok, user}
+      _membership ->
+        Logger.warning("User already has an active membership")
+        {:error, :already_has_membership}
+    end
+  end
+
 end

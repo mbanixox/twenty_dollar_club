@@ -49,7 +49,6 @@ defmodule TwentyDollarClubWeb.Router do
     post "/users/create", UserController, :create
     post "/users/sign_in", UserController, :sign_in
 
-    post "/payments/membership", PaymentController, :create_membership_mpesa
     post "/mpesa/callback", PaymentController, :mpesa_callback
   end
 
@@ -62,6 +61,8 @@ defmodule TwentyDollarClubWeb.Router do
     post "/users/sign_out", UserController, :sign_out
     patch "/users/update", UserController, :update
     delete "/users/delete", UserController, :delete
+
+    post "/payments/membership", PaymentController, :create_membership_mpesa
   end
 
   scope "/api", TwentyDollarClubWeb do
@@ -81,6 +82,8 @@ defmodule TwentyDollarClubWeb.Router do
     get "/membership/projects", ProjectController, :index
     get "/membership/projects/:id", ProjectController, :show
 
+    post "/project/contributions", PaymentController, :create_project_mpesa
+
     get "/membership/contributions", ContributionController, :index
     post "/membership/contributions", ContributionController, :create
     get "/membership/contributions/:id", ContributionController, :show
@@ -88,7 +91,6 @@ defmodule TwentyDollarClubWeb.Router do
     delete "/membership/contributions/:id", ContributionController, :delete
 
     get "/project/contributions", ProjectContributionController, :index
-    post "/project/contributions", ProjectContributionController, :create
     get "/project/contributions/:id", ProjectContributionController, :show
     patch "/project/contributions/:id", ProjectContributionController, :update
     delete "/project/contributions/:id", ProjectContributionController, :delete
