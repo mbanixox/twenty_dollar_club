@@ -17,11 +17,15 @@ defmodule TwentyDollarClubWeb.PaymentController do
   Initiates an M-Pesa STK Push request for membership creation.
   """
   def create_membership_mpesa(conn, %{"email" => email, "phone" => phone, "amount" => amount}) do
+    Logger.info("Initiating membership payment")
+
     with {:ok, user} <- get_or_create_user(email),
          {:ok, _} <- validate_no_membership(user),
          {:ok, contribution} <- create_pending_contribution(email, phone, amount),
          {:ok, response} <- initiate_stk_push(phone, amount, contribution.id),
          {:ok, _mpesa_txn} <- save_mpesa_transaction(contribution.id, response.body) do
+      Logger.info("STK push sent successfully ")
+
       conn
       |> put_status(:ok)
       |> json(%{
@@ -32,17 +36,21 @@ defmodule TwentyDollarClubWeb.PaymentController do
       })
     else
       {:error, %Ecto.Changeset{} = changeset} ->
+        Logger.warning("Validation error during membership payment")
+
         conn
         |> put_status(:unprocessable_entity)
         |> json(%{status: "error", errors: translate_errors(changeset)})
 
       {:error, :already_has_membership} ->
+        Logger.warning("User already has an active membership")
+
         conn
         |> put_status(:unprocessable_entity)
         |> json(%{status: "error", message: "User already has an active membership"})
 
-      {:error, reason} ->
-        Logger.error("Membership payment failed: #{inspect(reason)}")
+      {:error, _reason} ->
+        Logger.error("Membership payment initiation failed")
 
         conn
         |> put_status(:bad_request)
@@ -54,21 +62,25 @@ defmodule TwentyDollarClubWeb.PaymentController do
   Handles M-Pesa callback.
   """
   def mpesa_callback(conn, %{"Body" => %{"stkCallback" => callback}}) do
+    Logger.info("Received M-Pesa callback")
     Task.start(fn -> process_callback(callback) end)
 
     json(conn, %{ResultCode: 0, ResultDesc: "Accepted"})
   end
 
   def mpesa_callback(conn, _params) do
+    Logger.warning("Received M-Pesa callback with unexpected params")
     json(conn, %{ResultCode: 0, ResultDesc: "Accepted"})
   end
 
   defp get_or_create_user(email) do
     case Users.get_user_by_email(email) do
       nil ->
+        Logger.info("Creating new user")
         Users.create_user(%{email: email, name: email})
 
       user ->
+        Logger.debug("Found existing user")
         {:ok, user}
     end
   end
@@ -77,12 +89,17 @@ defmodule TwentyDollarClubWeb.PaymentController do
     user = Repo.preload(user, :membership)
 
     case user.membership do
-      nil -> {:ok, user}
-      _membership -> {:error, :already_has_membership}
+      nil ->
+        Logger.debug("User has no active membership")
+        {:ok, user}
+      _membership ->
+        Logger.warning("User already has an active membership")
+        {:error, :already_has_membership}
     end
   end
 
   defp create_pending_contribution(email, phone, amount) do
+    Logger.info("Creating pending contribution")
     Contributions.create_pending_contribution(%{
       payment_method: "mpesa",
       amount: amount,
@@ -94,10 +111,12 @@ defmodule TwentyDollarClubWeb.PaymentController do
 
   defp initiate_stk_push(phone, amount, contribution_id) do
     reference = "MEMBERSHIP-#{contribution_id}"
+    Logger.info("Initiating STK push")
     StkPush.push(phone, amount, reference)
   end
 
   defp save_mpesa_transaction(contribution_id, response_body) do
+    Logger.info("Saving M-Pesa transaction record")
     Contributions.create_mpesa_transaction(contribution_id, %{
       "merchant_request_id" => response_body["MerchantRequestID"],
       "checkout_request_id" => response_body["CheckoutRequestID"],
@@ -110,11 +129,11 @@ defmodule TwentyDollarClubWeb.PaymentController do
   defp process_callback(
          %{"CheckoutRequestID" => checkout_request_id, "ResultCode" => result_code} = callback
        ) do
-    Logger.info("Processing M-Pesa callback: #{inspect(callback)}")
+    Logger.info("Processing M-Pesa callback")
 
     case Contributions.get_mpesa_transaction_by_checkout_id(checkout_request_id) do
       nil ->
-        Logger.warning("M-Pesa transaction not found: #{checkout_request_id}")
+        Logger.warning("M-Pesa transaction not found")
 
       mpesa_transaction ->
         handle_payment_result(mpesa_transaction, result_code, callback)
@@ -124,6 +143,8 @@ defmodule TwentyDollarClubWeb.PaymentController do
   defp handle_payment_result(mpesa_transaction, 0, callback) do
     # Payment successful
     receipt_number = get_callback_metadata(callback, "MpesaReceiptNumber")
+
+    Logger.info("Payment successful")
 
     result =
       Repo.transaction(fn ->
@@ -136,11 +157,11 @@ defmodule TwentyDollarClubWeb.PaymentController do
              {:ok, user} <- get_user_by_email(contribution.email),
              {:ok, membership} <- create_membership_for_user(user),
              {:ok, _contribution} <- link_contribution_to_membership(contribution, membership.id) do
-          Logger.info("Membership created successfully for user #{user.email}")
+          Logger.info("Membership created successfully")
           {:ok, user.id, membership.generated_id, user.email}
         else
           {:error, reason} ->
-            Logger.error("Failed to process successful payment: #{inspect(reason)}")
+            Logger.error("Failed to process successful payment")
             Repo.rollback(reason)
         end
       end)
@@ -148,15 +169,18 @@ defmodule TwentyDollarClubWeb.PaymentController do
     # Broadcast AFTER transaction commits
     case result do
       {:ok, {:ok, user_id, membership_id, email}} ->
+        Logger.info("Broadcasting membership creation for user_id=#{user_id}, membership_id=#{membership_id}")
+
         Phoenix.PubSub.broadcast(
           TwentyDollarClub.PubSub,
           "payment:#{email}",
           {:membership_created, %{user_id: user_id, membership_id: membership_id}}
         )
 
-        Logger.info("Broadcasted membership creation for #{email}")
+        Logger.info("Broadcasted membership creation")
 
       _ ->
+        Logger.warning("Membership creation broadcast skipped due to transaction failure")
         :ok
     end
 
@@ -167,6 +191,8 @@ defmodule TwentyDollarClubWeb.PaymentController do
     # Payment failed
     result_desc = callback["ResultDesc"]
 
+    Logger.warning("Payment failed")
+
     with {:ok, _} <-
            Contributions.update_mpesa_transaction_callback(mpesa_transaction, %{
              "result_code" => to_string(callback["ResultCode"]),
@@ -174,7 +200,7 @@ defmodule TwentyDollarClubWeb.PaymentController do
            }),
          {:ok, _} <- Contributions.fail_contribution(mpesa_transaction.contribution) do
       Logger.info(
-        "Payment failed for contribution #{mpesa_transaction.contribution.id}: #{result_desc}"
+        "Marked contribution as failed due to payment failure"
       )
     end
   end
@@ -193,8 +219,12 @@ defmodule TwentyDollarClubWeb.PaymentController do
 
   defp get_user_by_email(email) do
     case Users.get_user_by_email(email) do
-      nil -> {:error, :user_not_found}
-      user -> {:ok, user}
+      nil ->
+        Logger.error("User not found")
+        {:error, :user_not_found}
+      user ->
+        Logger.debug("Found user")
+        {:ok, user}
     end
   end
 
@@ -203,14 +233,17 @@ defmodule TwentyDollarClubWeb.PaymentController do
 
     case user.membership do
       nil ->
+        Logger.info("Creating membership for user_id=#{user.id}")
         Memberships.create_membership(user, %{"role" => "member"})
 
       membership ->
+        Logger.debug("User already has a membership (id=#{membership.id})")
         {:ok, membership}
     end
   end
 
   defp link_contribution_to_membership(contribution, membership_id) do
+    Logger.info("Linking contribution_id=#{contribution.id} to membership_id=#{membership_id}")
     Contributions.update_contribution_membership(contribution, membership_id)
   end
 
