@@ -7,6 +7,12 @@
 # General application configuration
 import Config
 
+config :twenty_dollar_club, Oban,
+  engine: Oban.Engines.Basic,
+  notifier: Oban.Notifiers.Postgres,
+  queues: [default: 10],
+  repo: TwentyDollarClub.Repo
+
 config :twenty_dollar_club,
   ecto_repos: [TwentyDollarClub.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]

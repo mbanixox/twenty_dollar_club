@@ -56,7 +56,9 @@ defmodule TwentyDollarClub.MixProject do
       {:pbkdf2_elixir, "~> 2.3"},
       {:req, "~> 0.5"},
       {:cachex, "~> 4.1"},
-      {:corsica, "~> 2.1"}
+      {:corsica, "~> 2.1"},
+      {:oban, "~> 2.19"},
+      {:igniter, "~> 0.5", only: [:dev]}
     ]
   end
 

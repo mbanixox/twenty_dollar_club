@@ -1,4 +1,5 @@
 import Config
+config :twenty_dollar_club, Oban, testing: :manual
 
 # Configure your database
 #

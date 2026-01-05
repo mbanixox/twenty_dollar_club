@@ -11,7 +11,9 @@ defmodule TwentyDollarClub.Application do
       {Cachex, name: :mpesa_cache},
       TwentyDollarClubWeb.Telemetry,
       TwentyDollarClub.Repo,
-      {DNSCluster, query: Application.get_env(:twenty_dollar_club, :dns_cluster_query) || :ignore},
+      {DNSCluster,
+       query: Application.get_env(:twenty_dollar_club, :dns_cluster_query) || :ignore},
+      {Oban, Application.fetch_env!(:twenty_dollar_club, Oban)},
       {Phoenix.PubSub, name: TwentyDollarClub.PubSub},
       # Start a worker by calling: TwentyDollarClub.Worker.start_link(arg)
       # {TwentyDollarClub.Worker, arg},
