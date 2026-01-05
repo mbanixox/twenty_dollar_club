@@ -58,6 +58,7 @@ defmodule TwentyDollarClub.MixProject do
       {:cachex, "~> 4.1"},
       {:corsica, "~> 2.1"},
       {:oban, "~> 2.19"},
+      {:oban_web, "~> 2.11"},
       {:igniter, "~> 0.5", only: [:dev]}
     ]
   end

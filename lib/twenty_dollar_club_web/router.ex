@@ -1,5 +1,6 @@
 defmodule TwentyDollarClubWeb.Router do
   use TwentyDollarClubWeb, :router
+  import Oban.Web.Router
   use Plug.ErrorHandler
 
   def handle_errors(conn, %{reason: %Phoenix.Router.NoRouteError{message: message}}) do
@@ -25,6 +26,13 @@ defmodule TwentyDollarClubWeb.Router do
     # plug :fetch_session
   end
 
+  pipeline :browser do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+  end
+
   pipeline :user_auth do
     plug TwentyDollarClubWeb.Auth.Pipeline
     plug TwentyDollarClubWeb.Auth.SetUser
@@ -41,6 +49,13 @@ defmodule TwentyDollarClubWeb.Router do
     plug TwentyDollarClubWeb.Auth.SetUser
     plug TwentyDollarClubWeb.Auth.SetMembership
     plug TwentyDollarClubWeb.Auth.SetAdmin
+  end
+
+  pipeline :super_admin_auth do
+    plug TwentyDollarClubWeb.Auth.Pipeline
+    plug TwentyDollarClubWeb.Auth.SetUser
+    plug TwentyDollarClubWeb.Auth.SetMembership
+    plug TwentyDollarClubWeb.Auth.SetSuperAdmin
   end
 
   scope "/api", TwentyDollarClubWeb do
@@ -116,6 +131,12 @@ defmodule TwentyDollarClubWeb.Router do
       pipe_through [:fetch_session, :protect_from_forgery]
 
       live_dashboard "/dashboard", metrics: TwentyDollarClubWeb.Telemetry
+    end
+
+    scope "/" do
+      pipe_through [:browser, :super_admin_auth]
+
+      oban_dashboard("/oban")
     end
   end
 end
