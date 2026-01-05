@@ -6,7 +6,7 @@ defmodule TwentyDollarClub.Memberships.Membership do
   @foreign_key_type :binary_id
   schema "memberships" do
     field :generated_id, :integer
-    field :role, Ecto.Enum, values: [:member, :admin], default: :member
+    field :role, Ecto.Enum, values: [:member, :admin, :super_admin], default: :member
     belongs_to :user, TwentyDollarClub.Users.User
     has_many :beneficiaries, TwentyDollarClub.Beneficiaries.Beneficiary
     has_many :projects, TwentyDollarClub.Projects.Project
@@ -33,5 +33,15 @@ defmodule TwentyDollarClub.Memberships.Membership do
 
   defp generate_membership_id() do
     :rand.uniform(999_999_999)
+  end
+
+  def allowed_role_update?(current_role, new_role) do
+    case {current_role, new_role} do
+      {:admin, :admin} -> true
+      {:admin, :member} -> true
+      {:admin, :super_admin} -> false
+      {:super_admin, _} -> true
+      _ -> false
+    end
   end
 end
