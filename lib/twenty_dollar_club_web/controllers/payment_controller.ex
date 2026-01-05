@@ -5,7 +5,7 @@ defmodule TwentyDollarClubWeb.PaymentController do
 
   use TwentyDollarClubWeb, :controller
 
-  alias TwentyDollarClub.{Repo, Users, Memberships, Projects, Contributions}
+  alias TwentyDollarClub.{Users, Projects, Contributions}
   alias TwentyDollarClub.Mpesa.StkPush
   alias TwentyDollarClubWeb.FallbackController
 
@@ -77,8 +77,8 @@ defmodule TwentyDollarClubWeb.PaymentController do
     with true <- not is_nil(membership),
          {:ok, contribution} <-
            create_pending_contribution(user.email, phone, amount, description, contribution_type),
-         {:ok, _} <- link_contribution_to_membership(contribution, membership.id),
-         {:ok, _} <- link_contribution_to_project(contribution, project_id),
+         {:ok, _} <- Contributions.link_contribution_to_membership(contribution, membership.id),
+         {:ok, _} <- Contributions.link_contribution_to_project(contribution, project_id),
          {:ok, response} <- initiate_stk_push(phone, amount, contribution.id, contribution_type),
          {:ok, _mpesa_txn} <- save_mpesa_transaction(contribution.id, response.body) do
       Logger.info("STK push sent successfully for project payment")
@@ -110,11 +110,32 @@ defmodule TwentyDollarClubWeb.PaymentController do
 
   @doc """
   Handles M-Pesa callback.
+  Enqueues the callback processing to Oban for reliable, async handling.
   """
   def mpesa_callback(conn, %{"Body" => %{"stkCallback" => callback}}) do
     Logger.info("Received M-Pesa callback")
-    Task.start(fn -> process_callback(callback) end)
 
+    # Extract key data for job processing
+    checkout_request_id = callback["CheckoutRequestID"]
+    result_code = callback["ResultCode"]
+
+    # Enqueue the job to Oban for processing
+    %{
+      checkout_request_id: checkout_request_id,
+      result_code: result_code,
+      callback: callback
+    }
+    |> TwentyDollarClub.Jobs.PaymentCallbackWorker.new()
+    |> Oban.insert()
+    |> case do
+      {:ok, _job} ->
+        Logger.info("Payment callback job enqueued: #{checkout_request_id}")
+
+      {:error, reason} ->
+        Logger.error("Failed to enqueue payment callback job: #{inspect(reason)}")
+    end
+
+    # Always return success to M-Pesa immediately
     json(conn, %{ResultCode: 0, ResultDesc: "Accepted"})
   end
 
@@ -152,199 +173,6 @@ defmodule TwentyDollarClubWeb.PaymentController do
       "response_description" => response_body["ResponseDescription"],
       "customer_message" => response_body["CustomerMessage"]
     })
-  end
-
-  defp process_callback(
-         %{"CheckoutRequestID" => checkout_request_id, "ResultCode" => result_code} = callback
-       ) do
-    Logger.info("Processing M-Pesa callback")
-
-    case Contributions.get_mpesa_transaction_by_checkout_id(checkout_request_id) do
-      nil ->
-        Logger.warning("M-Pesa transaction not found")
-
-      mpesa_transaction ->
-        handle_payment_result(mpesa_transaction, result_code, callback)
-    end
-  end
-
-  defp handle_payment_result(mpesa_transaction, 0, callback) do
-  # Payment successful
-
-    mpesa_transaction = Repo.preload(mpesa_transaction, :contribution, force: true)
-    contribution = mpesa_transaction.contribution
-
-    case contribution.contribution_type do
-      :membership ->
-        handle_membership_payment_success(mpesa_transaction, callback)
-
-      :project ->
-        handle_project_payment_success(mpesa_transaction, callback)
-
-      _ ->
-        Logger.warning("Unknown contribution type in payment result")
-        :ok
-    end
-  end
-
-  defp handle_payment_result(mpesa_transaction, _result_code, callback) do
-    # Payment failed
-
-    result_desc = callback["ResultDesc"]
-
-    Logger.warning("Payment failed")
-
-    with {:ok, _} <-
-           Contributions.update_mpesa_transaction_callback(mpesa_transaction, %{
-             "result_code" => to_string(callback["ResultCode"]),
-             "result_desc" => result_desc
-           }),
-         {:ok, _} <- Contributions.fail_contribution(mpesa_transaction.contribution) do
-      Logger.info("Marked contribution as failed due to payment failure")
-    end
-  end
-
-  defp handle_membership_payment_success(mpesa_transaction, callback) do
-    receipt_number = get_callback_metadata(callback, "MpesaReceiptNumber")
-    Logger.info("Payment successful for membership")
-
-    result =
-      Repo.transaction(fn ->
-        with {:ok, updated_mpesa} <-
-               update_mpesa_success(mpesa_transaction, receipt_number, callback),
-             updated_mpesa <- Repo.preload(updated_mpesa, :contribution, force: true),
-             {:ok, contribution} <-
-               complete_contribution(updated_mpesa.contribution, receipt_number),
-             {:ok, user} <- get_user_by_email(contribution.email),
-             {:ok, membership} <- create_membership_for_user(user),
-             {:ok, _contribution} <- link_contribution_to_membership(contribution, membership.id) do
-          Logger.info("Membership created successfully")
-          {:ok, user.id, membership.generated_id, user.email}
-        else
-          {:error, reason} ->
-            Logger.error("Failed to process successful membership payment")
-            Repo.rollback(reason)
-        end
-      end)
-
-    case result do
-      {:ok, {:ok, user_id, membership_id, email}} ->
-        Logger.info(
-          "Broadcasting membership creation for user_id=#{user_id}, membership_id=#{membership_id}"
-        )
-
-        Phoenix.PubSub.broadcast(
-          TwentyDollarClub.PubSub,
-          "payment:#{email}",
-          {:membership_created, %{user_id: user_id, membership_id: membership_id}}
-        )
-
-        Logger.info("Broadcasted membership creation")
-
-      _ ->
-        Logger.warning("Membership creation broadcast skipped due to transaction failure")
-        :ok
-    end
-
-    result
-  end
-
-  defp handle_project_payment_success(mpesa_transaction, callback) do
-    receipt_number = get_callback_metadata(callback, "MpesaReceiptNumber")
-    Logger.info("Payment successful for project")
-
-    result =
-      Repo.transaction(fn ->
-        with {:ok, updated_mpesa} <-
-               update_mpesa_success(mpesa_transaction, receipt_number, callback),
-             updated_mpesa <- Repo.preload(updated_mpesa, :contribution, force: true),
-             {:ok, contribution} <-
-               complete_contribution(updated_mpesa.contribution, receipt_number) do
-          Logger.info("Project contribution completed successfully")
-          {:ok, contribution.id, contribution.project_id, contribution.email}
-        else
-          {:error, reason} ->
-            Logger.error("Failed to process successful project payment")
-            Repo.rollback(reason)
-        end
-      end)
-
-    case result do
-      {:ok, {:ok, contribution_id, project_id, email}} ->
-        Logger.info(
-          "Broadcasting project payment for contribution_id=#{contribution_id}, project_id=#{project_id}"
-        )
-
-        Phoenix.PubSub.broadcast(
-          TwentyDollarClub.PubSub,
-          "payment:#{email}",
-          {:project_paid, %{contribution_id: contribution_id, project_id: project_id}}
-        )
-
-        Logger.info("Broadcasted project payment")
-
-      _ ->
-        Logger.warning("Project payment broadcast skipped due to transaction failure")
-        :ok
-    end
-
-    result
-  end
-
-  defp update_mpesa_success(mpesa_transaction, receipt_number, callback) do
-    Contributions.update_mpesa_transaction_callback(mpesa_transaction, %{
-      "mpesa_receipt_number" => receipt_number,
-      "result_code" => "0",
-      "result_desc" => callback["ResultDesc"]
-    })
-  end
-
-  defp complete_contribution(contribution, receipt_number) do
-    Contributions.complete_contribution(contribution, receipt_number)
-  end
-
-  defp get_user_by_email(email) do
-    case Users.get_user_by_email(email) do
-      nil ->
-        Logger.error("User not found")
-        {:error, :user_not_found}
-
-      user ->
-        Logger.debug("Found user")
-        {:ok, user}
-    end
-  end
-
-  defp create_membership_for_user(user) do
-    user = Repo.preload(user, :membership)
-
-    case user.membership do
-      nil ->
-        Logger.info("Creating membership for user_id=#{user.id}")
-        Memberships.create_membership(user, %{"role" => "member"})
-
-      membership ->
-        Logger.debug("User already has a membership (id=#{membership.id})")
-        {:ok, membership}
-    end
-  end
-
-  defp link_contribution_to_membership(contribution, membership_id) do
-    Logger.info("Linking contribution_id=#{contribution.id} to membership_id=#{membership_id}")
-    Contributions.update_contribution_membership(contribution, membership_id)
-  end
-
-  defp link_contribution_to_project(contribution, project_id) do
-    Logger.info("Linking contribution_id=#{contribution.id} to project_id=#{project_id}")
-    Contributions.update_contribution_project(contribution, project_id)
-  end
-
-  defp get_callback_metadata(callback, key) do
-    callback
-    |> Map.get("CallbackMetadata", %{})
-    |> Map.get("Item", [])
-    |> Enum.find(%{}, fn item -> item["Name"] == key end)
-    |> Map.get("Value")
   end
 
   defp translate_errors(changeset) do

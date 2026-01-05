@@ -10,8 +10,17 @@ import Config
 config :twenty_dollar_club, Oban,
   engine: Oban.Engines.Basic,
   notifier: Oban.Notifiers.Postgres,
-  queues: [default: 10],
-  repo: TwentyDollarClub.Repo
+  repo: TwentyDollarClub.Repo,
+  queues: [
+    default: 10,
+    payments: 20,
+    reports: 5,
+    mailers: 10
+  ],
+  plugins: [
+    {Oban.Plugins.Pruner, max_age: 60 * 60 * 24 * 7},
+    {Oban.Plugins.Cron, crontab: []}
+  ]
 
 config :twenty_dollar_club,
   ecto_repos: [TwentyDollarClub.Repo],

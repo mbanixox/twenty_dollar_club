@@ -81,13 +81,13 @@ defmodule TwentyDollarClub.Contributions do
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_contribution_membership(contribution, membership_id) do
+  def link_contribution_to_membership(contribution, membership_id) do
     contribution
     |> Contribution.membership_changeset(membership_id)
     |> Repo.update()
   end
 
-  def update_contribution_project(contribution, project_id) do
+  def link_contribution_to_project(contribution, project_id) do
     contribution
     |> Contribution.project_changeset(project_id)
     |> Repo.update()
