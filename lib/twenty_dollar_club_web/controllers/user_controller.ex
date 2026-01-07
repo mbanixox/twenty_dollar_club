@@ -106,6 +106,14 @@ defmodule TwentyDollarClubWeb.UserController do
   end
 
   @doc """
+  Shows a user by ID with their membership.
+  """
+  def show_with_membership(conn, %{"id" => id}) do
+    user = Users.get_user_with_membership!(id)
+     render(conn, :show, user: user)
+  end
+
+  @doc """
   Updates a user's information.
 
   Expects `id` and user parameters in the request body.
