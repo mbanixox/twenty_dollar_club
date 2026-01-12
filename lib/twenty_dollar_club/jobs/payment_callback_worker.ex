@@ -146,13 +146,22 @@ defmodule TwentyDollarClub.Jobs.PaymentCallbackWorker do
                update_mpesa_success(mpesa_transaction, receipt_number, callback),
              updated_mpesa <- Repo.preload(updated_mpesa, :contribution, force: true),
              {:ok, contribution} <-
-               complete_contribution(updated_mpesa.contribution, receipt_number) do
-          Logger.info("Project contribution completed successfully")
+               complete_contribution(updated_mpesa.contribution, receipt_number),
+             project when not is_nil(project) <-
+               TwentyDollarClub.Projects.get_project!(contribution.project_id),
+             {:ok, _updated_project} <-
+               TwentyDollarClub.Projects.update_project(project, %{
+                 funded_amount: Decimal.add(project.funded_amount || 0, contribution.amount)
+               }) do
+          Logger.info("Project contribution completed and funded_amount updated successfully")
           {:ok, contribution.id, contribution.project_id, contribution.email}
         else
           {:error, reason} ->
             Logger.error("Failed to process successful project payment: #{inspect(reason)}")
             Repo.rollback(reason)
+          nil ->
+            Logger.error("Project not found for contribution")
+            Repo.rollback(:project_not_found)
         end
       end)
 

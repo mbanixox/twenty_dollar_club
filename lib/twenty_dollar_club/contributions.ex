@@ -284,4 +284,14 @@ defmodule TwentyDollarClub.Contributions do
   def change_contribution(%Contribution{} = contribution, attrs \\ %{}) do
     Contribution.changeset(contribution, attrs)
   end
+
+  def sum_completed_contributions_for_project(project_id) do
+    import Ecto.Query
+
+    from(c in Contribution,
+      where: c.project_id == ^project_id and c.status == :completed,
+      select: coalesce(sum(c.amount), 0)
+    )
+    |> Repo.one()
+  end
 end

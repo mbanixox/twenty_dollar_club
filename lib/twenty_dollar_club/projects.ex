@@ -101,4 +101,18 @@ defmodule TwentyDollarClub.Projects do
   def change_project(%Project{} = project, attrs \\ %{}) do
     Project.changeset(project, attrs)
   end
+
+  @doc """
+  Recalculates and updates the funded amount for a project based on its completed contributions.
+
+  ## Examples
+
+      iex> update_funded_amount_from_contributions(project_id)
+      {:ok, %Project{}}
+  """
+  def update_funded_amount_from_contributions(project_id) do
+    funded_amount = TwentyDollarClub.Contributions.sum_completed_contributions_for_project(project_id)
+    project = get_project!(project_id)
+    update_project(project, %{funded_amount: funded_amount})
+  end
 end
