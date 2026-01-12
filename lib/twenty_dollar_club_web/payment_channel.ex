@@ -39,4 +39,14 @@ defmodule TwentyDollarClubWeb.PaymentChannel do
 
     {:noreply, socket}
   end
+
+  @impl true
+  def handle_info({:project_paid, %{contribution_id: contribution_id, project_id: project_id}}, socket) do
+    push(socket, "project_paid", %{
+      contribution_id: contribution_id,
+      project_id: project_id
+    })
+
+    {:noreply, socket}
+  end
 end

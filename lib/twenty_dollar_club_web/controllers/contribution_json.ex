@@ -23,6 +23,7 @@ defmodule TwentyDollarClubWeb.ContributionJSON do
       status: contribution.status,
       amount: contribution.amount,
       description: contribution.description,
+      email: contribution.email,
       contribution_type: contribution.contribution_type,
       membership_id: contribution.membership_id,
       project_id: contribution.project_id
