@@ -108,6 +108,9 @@ defmodule TwentyDollarClubWeb.Router do
     get "/project/contributions/:id", ProjectContributionController, :show
     patch "/project/contributions/:id", ProjectContributionController, :update
     delete "/project/contributions/:id", ProjectContributionController, :delete
+
+    post "/reports/generate", ReportController, :generate
+    get "/reports/download/:filename", ReportController, :download
   end
 
   scope "/api/admin", TwentyDollarClubWeb do

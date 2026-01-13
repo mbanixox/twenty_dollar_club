@@ -59,7 +59,8 @@ defmodule TwentyDollarClub.MixProject do
       {:corsica, "~> 2.1"},
       {:oban, "~> 2.19"},
       {:oban_web, "~> 2.11"},
-      {:igniter, "~> 0.5", only: [:dev]}
+      {:igniter, "~> 0.5", only: [:dev]},
+      {:elixlsx, "~> 0.6.0"}
     ]
   end
 
