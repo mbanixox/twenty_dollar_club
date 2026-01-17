@@ -6,6 +6,7 @@ defmodule TwentyDollarClub.Reports.ExcelGenerator do
   - Data validation and formatting
   - Multiple sheets when needed
   - Summary statistics
+  - Styling with colors
   """
 
   alias Elixlsx.{Workbook, Sheet}
@@ -13,6 +14,18 @@ defmodule TwentyDollarClub.Reports.ExcelGenerator do
   import Ecto.Query
 
   require Logger
+
+  @title_style [bold: true, size: 14, color: "#FFFFFF", bg_color: "#4472C4"]
+
+  @header_style [bold: true, size: 11, color: "#FFFFFF", bg_color: "#5B9BD5"]
+
+  @summary_label_style [bold: true, size: 11, bg_color: "#D9E1F2"]
+
+  @summary_value_style [size: 11, bg_color: "#D9E1F2"]
+
+  @data_style [size: 10]
+
+  @alternating_row_style [size: 10, bg_color: "#F2F2F2"]
 
   @doc """
   Generates a memberships report.
@@ -25,47 +38,56 @@ defmodule TwentyDollarClub.Reports.ExcelGenerator do
       )
       |> Repo.all()
 
-    # Summary statistics
     total_count = length(memberships)
     role_counts = Enum.frequencies_by(memberships, & &1.role)
 
-    headers = [
-      ["Membership Report - Generated: #{format_datetime(DateTime.utc_now())}"],
+    title_row = [
+      [["Membership Report - Generated: #{format_datetime(DateTime.utc_now())}" | @title_style]]
+    ]
+
+    summary_rows = [
       [],
-      ["Total Memberships:", total_count],
-      ["Members:", Map.get(role_counts, :member, 0)],
-      ["Admins:", Map.get(role_counts, :admin, 0)],
-      ["Super Admins (Developers):", Map.get(role_counts, :super_admin, 0)],
-      [],
-      ["ID", "Member ID", "User Email", "Name", "Role", "Created At", "Updated At"]
+      [["Total Memberships:" | @summary_label_style], [total_count | @summary_value_style]],
+      [["Members:" | @summary_label_style], [Map.get(role_counts, :member, 0) | @summary_value_style]],
+      [["Admins:" | @summary_label_style], [Map.get(role_counts, :admin, 0) | @summary_value_style]],
+      [["Super Admins (Developers):" | @summary_label_style], [Map.get(role_counts, :super_admin, 0) | @summary_value_style]],
+      []
+    ]
+
+    header_row = [
+      Enum.map(
+        ["ID", "Member ID", "User Email", "Name", "Role", "Created At", "Updated At"],
+        &[&1 | @header_style]
+      )
     ]
 
     data_rows =
-      Enum.map(memberships, fn m ->
+      memberships
+      |> Enum.with_index()
+      |> Enum.map(fn {m, index} ->
+        style = if rem(index, 2) == 0, do: @data_style, else: @alternating_row_style
+
         [
-          safe_string(m.id),
-          safe_string(m.generated_id),
-          safe_string(m.user.email),
-          format_name(
-            Map.get(m.user, :first_name),
-            Map.get(m.user, :last_name)
-          ),
-          format_role(m.role),
-          format_datetime(m.inserted_at),
-          format_datetime(m.updated_at)
+          [safe_string(m.id) | style],
+          [safe_string(m.generated_id) | style],
+          [safe_string(m.user.email) | style],
+          [format_name(Map.get(m.user, :first_name), Map.get(m.user, :last_name)) | style],
+          [format_role(m.role) | style],
+          [format_datetime(m.inserted_at) | style],
+          [format_datetime(m.updated_at) | style]
         ]
       end)
 
-    rows = headers ++ data_rows
+    rows = title_row ++ summary_rows ++ header_row ++ data_rows
 
-    sheet = %Sheet{name: "Memberships", rows: rows}
+    sheet = %Sheet{name: "Memberships", rows: rows, merge_cells: [{"A1", "C1"}]}
 
     sheet
     |> Sheet.set_col_width("A", 40.0)
     |> Sheet.set_col_width("B", 15.0)
     |> Sheet.set_col_width("C", 30.0)
-    |> Sheet.set_col_width("D", 17.0)
-    |> Sheet.set_col_width("E", 14.0)
+    |> Sheet.set_col_width("D", 25.0)
+    |> Sheet.set_col_width("E", 20.0)
     |> Sheet.set_col_width("F", 22.0)
     |> Sheet.set_col_width("G", 22.0)
     |> then(&%Workbook{sheets: [&1]})
@@ -83,7 +105,6 @@ defmodule TwentyDollarClub.Reports.ExcelGenerator do
 
     Logger.info("Generating report for #{length(projects)} projects")
 
-    # Summary statistics
     total_projects = length(projects)
 
     total_goal =
@@ -99,67 +120,70 @@ defmodule TwentyDollarClub.Reports.ExcelGenerator do
     overall_progress = calculate_percentage(total_funded, total_goal)
     status_counts = Enum.frequencies_by(projects, & &1.status)
 
-    headers = [
-      ["Projects Report - Generated: #{format_datetime(DateTime.utc_now())}"],
+    title_row = [
+      [["Projects Report - Generated: #{format_datetime(DateTime.utc_now())}" | @title_style]]
+    ]
+
+    summary_rows = [
       [],
-      ["Total Projects:", safe_number(total_projects)],
-      ["Total Goal Amount:", safe_currency(total_goal)],
-      ["Total Funded:", safe_currency(total_funded)],
-      ["Overall Progress:", "#{overall_progress}%"],
+      [["Total Projects:" | @summary_label_style], [safe_number(total_projects) | @summary_value_style]],
+      [["Total Goal Amount:" | @summary_label_style], [safe_currency(total_goal) | @summary_value_style]],
+      [["Total Funded:" | @summary_label_style], [safe_currency(total_funded) | @summary_value_style]],
+      [["Overall Progress:" | @summary_label_style], ["#{overall_progress}%" | @summary_value_style]],
       [],
-      ["Status Breakdown:"],
-      ["Active:", safe_number(Map.get(status_counts, :active, 0))],
-      ["Completed:", safe_number(Map.get(status_counts, :completed, 0))],
-      ["Paused:", safe_number(Map.get(status_counts, :paused, 0))],
-      [],
-      [
-        "ID",
-        "Title",
-        "Description",
-        "Status",
-        "Goal Amount (KSh)",
-        "Funded Amount (KSh)",
-        "Progress %",
-        "Created At"
-      ]
+      [["Status Breakdown:" | @summary_label_style]],
+      [["Active:" | @summary_label_style], [safe_number(Map.get(status_counts, :active, 0)) | @summary_value_style]],
+      [["Completed:" | @summary_label_style], [safe_number(Map.get(status_counts, :completed, 0)) | @summary_value_style]],
+      [["Paused:" | @summary_label_style], [safe_number(Map.get(status_counts, :paused, 0)) | @summary_value_style]],
+      []
+    ]
+
+    header_row = [
+      Enum.map(
+        ["ID", "Title", "Description", "Status", "Goal Amount (KSh)", "Funded Amount (KSh)", "Progress %", "Created At"],
+        &[&1 | @header_style]
+      )
     ]
 
     data_rows =
-      Enum.map(projects, fn p ->
+      projects
+      |> Enum.with_index()
+      |> Enum.map(fn {p, index} ->
+        style = if rem(index, 2) == 0, do: @data_style, else: @alternating_row_style
         progress = calculate_percentage(p.funded_amount, p.goal_amount)
 
         [
-          safe_string(p.id),
-          safe_string(p.title),
-          safe_string(Map.get(p, :description)),
-          format_status(p.status),
-          safe_decimal(p.goal_amount),
-          safe_decimal(p.funded_amount),
-          "#{progress}%",
-          format_datetime(p.inserted_at)
+          [safe_string(p.id) | style],
+          [safe_string(p.title) | style],
+          [safe_string(Map.get(p, :description)) | style],
+          [format_status(p.status) | style],
+          [safe_decimal(p.goal_amount) | style],
+          [safe_decimal(p.funded_amount) | style],
+          ["#{progress}%" | style],
+          [format_datetime(p.inserted_at) | style]
         ]
       end)
 
-    rows = headers ++ data_rows
+    rows = title_row ++ summary_rows ++ header_row ++ data_rows
 
     Logger.info("Total rows in sheet: #{length(rows)}")
 
-    sheet = %Sheet{name: "Projects", rows: rows}
+    sheet = %Sheet{name: "Projects", rows: rows, merge_cells: [{"A1", "C1"}]}
 
     sheet
     |> Sheet.set_col_width("A", 40.0)
-    |> Sheet.set_col_width("B", 25.0)
-    |> Sheet.set_col_width("C", 40.0)
-    |> Sheet.set_col_width("D", 12.0)
-    |> Sheet.set_col_width("E", 18.0)
-    |> Sheet.set_col_width("F", 20.0)
-    |> Sheet.set_col_width("G", 12.0)
+    |> Sheet.set_col_width("B", 30.0)
+    |> Sheet.set_col_width("C", 45.0)
+    |> Sheet.set_col_width("D", 15.0)
+    |> Sheet.set_col_width("E", 20.0)
+    |> Sheet.set_col_width("F", 22.0)
+    |> Sheet.set_col_width("G", 15.0)
     |> Sheet.set_col_width("H", 22.0)
     |> then(&%Workbook{sheets: [&1]})
   end
 
   @doc """
-  Generates a comprehensive contributions report with payment analysis.
+  Generates a contributions report with payment analysis.
   """
   def generate_contributions_report do
     contributions =
@@ -171,7 +195,6 @@ defmodule TwentyDollarClub.Reports.ExcelGenerator do
 
     Logger.info("Generating report for #{length(contributions)} contributions")
 
-    # Summary statistics
     total_contributions = length(contributions)
 
     completed_amount =
@@ -190,51 +213,48 @@ defmodule TwentyDollarClub.Reports.ExcelGenerator do
 
     status_counts = Enum.frequencies_by(contributions, & &1.status)
     type_counts = Enum.frequencies_by(contributions, & &1.contribution_type)
+    method_counts = Enum.frequencies_by(contributions, &(Map.get(&1, :payment_method) || :unknown))
 
-    method_counts =
-      Enum.frequencies_by(contributions, &(Map.get(&1, :payment_method) || :unknown))
+    title_row = [
+      [["Contributions Report - Generated: #{format_datetime(DateTime.utc_now())}" | @title_style]]
+    ]
 
-    headers = [
-      ["Contributions Report - Generated: #{format_datetime(DateTime.utc_now())}"],
+    summary_rows = [
       [],
-      ["Total Contributions:", safe_number(total_contributions)],
-      ["Completed Amount:", safe_currency(completed_amount)],
-      ["Pending Amount:", safe_currency(pending_amount)],
+      [["Total Contributions:" | @summary_label_style], [safe_number(total_contributions) | @summary_value_style]],
+      [["Completed Amount:" | @summary_label_style], [safe_currency(completed_amount) | @summary_value_style]],
+      [["Pending Amount:" | @summary_label_style], [safe_currency(pending_amount) | @summary_value_style]],
       [],
-      ["By Status:"],
-      ["Completed:", safe_number(Map.get(status_counts, :completed, 0))],
-      ["Pending:", safe_number(Map.get(status_counts, :pending, 0))],
-      ["Failed:", safe_number(Map.get(status_counts, :failed, 0))],
-      ["Cancelled:", safe_number(Map.get(status_counts, :cancelled, 0))],
+      [["By Status:" | @summary_label_style]],
+      [["Completed:" | @summary_label_style], [safe_number(Map.get(status_counts, :completed, 0)) | @summary_value_style]],
+      [["Pending:" | @summary_label_style], [safe_number(Map.get(status_counts, :pending, 0)) | @summary_value_style]],
+      [["Failed:" | @summary_label_style], [safe_number(Map.get(status_counts, :failed, 0)) | @summary_value_style]],
+      [["Cancelled:" | @summary_label_style], [safe_number(Map.get(status_counts, :cancelled, 0)) | @summary_value_style]],
       [],
-      ["By Type:"],
-      ["Membership:", safe_number(Map.get(type_counts, :membership, 0))],
-      ["Project:", safe_number(Map.get(type_counts, :project, 0))],
+      [["By Type:" | @summary_label_style]],
+      [["Membership:" | @summary_label_style], [safe_number(Map.get(type_counts, :membership, 0)) | @summary_value_style]],
+      [["Project:" | @summary_label_style], [safe_number(Map.get(type_counts, :project, 0)) | @summary_value_style]],
       [],
-      ["By Payment Method:"],
-      ["M-Pesa:", safe_number(Map.get(method_counts, :mpesa, 0))],
-      ["Card:", safe_number(Map.get(method_counts, :card, 0))],
-      ["Cash:", safe_number(Map.get(method_counts, :cash, 0))],
-      ["Unknown:", safe_number(Map.get(method_counts, :unknown, 0))],
-      [],
-      [
-        "ID",
-        "Type",
-        "Amount (KSh)",
-        "Status",
-        "Method",
-        "Transaction Ref",
-        "Email",
-        "Phone",
-        "Description",
-        "Related To",
-        "Membership ID",
-        "Created At"
-      ]
+      [["By Payment Method:" | @summary_label_style]],
+      [["M-Pesa:" | @summary_label_style], [safe_number(Map.get(method_counts, :mpesa, 0)) | @summary_value_style]],
+      [["Card:" | @summary_label_style], [safe_number(Map.get(method_counts, :card, 0)) | @summary_value_style]],
+      [["Cash:" | @summary_label_style], [safe_number(Map.get(method_counts, :cash, 0)) | @summary_value_style]],
+      [["Unknown:" | @summary_label_style], [safe_number(Map.get(method_counts, :unknown, 0)) | @summary_value_style]],
+      []
+    ]
+
+    header_row = [
+      Enum.map(
+        ["ID", "Type", "Amount (KSh)", "Status", "Method", "Transaction Ref", "Email", "Phone", "Description", "Related To", "Membership ID", "Created At"],
+        &[&1 | @header_style]
+      )
     ]
 
     data_rows =
-      Enum.map(contributions, fn c ->
+      contributions
+      |> Enum.with_index()
+      |> Enum.map(fn {c, index} ->
+        style = if rem(index, 2) == 0, do: @data_style, else: @alternating_row_style
         related_to = get_related_entity(c)
 
         membership_id =
@@ -245,24 +265,24 @@ defmodule TwentyDollarClub.Reports.ExcelGenerator do
           end
 
         [
-          safe_string(c.id),
-          format_contribution_type(c.contribution_type),
-          safe_decimal(c.amount),
-          format_status(c.status),
-          format_payment_method(Map.get(c, :payment_method)),
-          safe_string(Map.get(c, :transaction_reference)),
-          safe_string(c.email),
-          safe_string(Map.get(c, :phone_number)),
-          safe_string(Map.get(c, :description)),
-          related_to,
-          membership_id,
-          format_datetime(c.inserted_at)
+          [safe_string(c.id) | style],
+          [format_contribution_type(c.contribution_type) | style],
+          [safe_decimal(c.amount) | style],
+          [format_status(c.status) | style],
+          [format_payment_method(Map.get(c, :payment_method)) | style],
+          [safe_string(Map.get(c, :transaction_reference)) | style],
+          [safe_string(c.email) | style],
+          [safe_string(Map.get(c, :phone_number)) | style],
+          [safe_string(Map.get(c, :description)) | style],
+          [related_to | style],
+          [membership_id | style],
+          [format_datetime(c.inserted_at) | style]
         ]
       end)
 
-    rows = headers ++ data_rows
+    rows = title_row ++ summary_rows ++ header_row ++ data_rows
 
-    sheet = %Sheet{name: "Contributions", rows: rows}
+    sheet = %Sheet{name: "Contributions", rows: rows, merge_cells: [{"A1", "C1"}]}
 
     sheet
     |> Sheet.set_col_width("A", 40.0)
@@ -270,11 +290,11 @@ defmodule TwentyDollarClub.Reports.ExcelGenerator do
     |> Sheet.set_col_width("C", 15.0)
     |> Sheet.set_col_width("D", 12.0)
     |> Sheet.set_col_width("E", 12.0)
-    |> Sheet.set_col_width("F", 20.0)
+    |> Sheet.set_col_width("F", 25.0)
     |> Sheet.set_col_width("G", 30.0)
     |> Sheet.set_col_width("H", 15.0)
-    |> Sheet.set_col_width("I", 30.0)
-    |> Sheet.set_col_width("J", 30.0)
+    |> Sheet.set_col_width("I", 35.0)
+    |> Sheet.set_col_width("J", 35.0)
     |> Sheet.set_col_width("K", 15.0)
     |> Sheet.set_col_width("L", 22.0)
     |> then(&%Workbook{sheets: [&1]})
