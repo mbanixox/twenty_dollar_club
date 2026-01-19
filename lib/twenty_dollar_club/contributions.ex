@@ -227,14 +227,21 @@ defmodule TwentyDollarClub.Contributions do
 
   ## Examples
 
-      iex> list_membership_contributions(membership_id)
+      iex> list_member_contributions(membership_id)
       [%Contribution{}, ...]
 
   """
-  def list_membership_contributions(membership_id) do
+  def list_member_contributions(membership_id) do
     Contribution
     |> where(membership_id: ^membership_id)
-    |> order_by(desc: :inserted_at)
+    |> order_by(desc: :updated_at)
+    |> Repo.all()
+  end
+
+  def list_project_contributions(project_id) do
+    Contribution
+    |> where(project_id: ^project_id)
+    |> order_by(desc: :updated_at)
     |> Repo.all()
   end
 

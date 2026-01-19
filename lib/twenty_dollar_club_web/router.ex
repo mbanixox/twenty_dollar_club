@@ -101,13 +101,10 @@ defmodule TwentyDollarClubWeb.Router do
 
     post "/project/contributions", PaymentController, :project_payment_mpesa
 
-    get "/membership/contributions", ContributionController, :index
-    get "/membership/contributions/:id", ContributionController, :show
-
-    get "/project/contributions", ProjectContributionController, :index
-    get "/project/contributions/:id", ProjectContributionController, :show
-    patch "/project/contributions/:id", ProjectContributionController, :update
-    delete "/project/contributions/:id", ProjectContributionController, :delete
+    get "/contributions", ContributionController, :index
+    get "/contributions/:id", ContributionController, :show
+    get "/contributions/member/:member_id", ContributionController, :member_contributions
+    get "/contributions/project/:project_id", ContributionController, :project_contributions
 
     post "/reports/generate", ReportController, :generate
     get "/reports/download/:filename", ReportController, :download
