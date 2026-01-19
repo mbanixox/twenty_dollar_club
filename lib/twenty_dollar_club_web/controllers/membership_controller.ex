@@ -55,9 +55,9 @@ defmodule TwentyDollarClubWeb.MembershipController do
 
   Returns forbidden if the role update is not permitted.
   """
-  def update(conn, %{"membership" => %{"role" => new_role} = membership_params}) do
-    membership = conn.assigns.user.membership
-    current_role = membership.role
+  def update(conn, %{"id" => id, "membership" => %{"role" => new_role} = membership_params}) do
+    membership = Memberships.get_membership!(id)
+    current_role = conn.assigns.user.membership.role
 
     if Membership.allowed_role_update?(current_role, String.to_existing_atom(new_role)) do
       with {:ok, %Membership{} = membership} <-

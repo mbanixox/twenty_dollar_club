@@ -116,7 +116,7 @@ defmodule TwentyDollarClubWeb.Router do
   scope "/api/admin", TwentyDollarClubWeb do
     pipe_through [:api, :admin_auth]
 
-    patch "/memberships/update", MembershipController, :update
+    patch "/memberships/update/:id", MembershipController, :update
 
     post "/projects/create", ProjectController, :create
     patch "/projects/:id", ProjectController, :update
