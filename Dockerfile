@@ -57,6 +57,7 @@ RUN mix compile
 COPY config/runtime.exs config/
 
 COPY rel rel
+RUN find rel -type f \( -name "*.sh" -o -name "*.eex" \) -exec sed -i 's/\r$//' {} \;
 RUN mix release
 
 # start a new build stage so that the final image will only contain
@@ -86,9 +87,18 @@ COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/twenty_dollar
 
 USER nobody
 
-# If using an environment that doesn't automatically reap zombie processes, it is
-# advised to add an init process such as tini via `apt-get install`
-# above and adding an entrypoint. See https://github.com/krallin/tini for details
-# ENTRYPOINT ["/tini", "--"]
+# Create entrypoint script
+USER root
+RUN echo '#!/bin/sh\n\
+set -e\n\
+echo "Running migrations..."\n\
+/app/bin/twenty_dollar_club eval "TwentyDollarClub.Release.migrate()"\n\
+echo "Starting application..."\n\
+exec /app/bin/twenty_dollar_club start' > /app/entrypoint.sh && \
+chmod +x /app/entrypoint.sh && \
+chown nobody:nogroup /app/entrypoint.sh
 
-CMD ["/app/bin/server"]
+USER nobody
+
+CMD ["/app/entrypoint.sh"]
+EXPOSE 4000
