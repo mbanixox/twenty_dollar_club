@@ -34,11 +34,25 @@ defmodule TwentyDollarClubWeb.ReportChannel do
 
   @impl true
   def handle_info({:report_ready, report_data}, socket) do
+    Logger.info("Report ready for membership #{socket.assigns.membership_id}: #{report_data.filename}")
+
     # Push notification to client when report is ready
     push(socket, "report_ready", %{
       report_type: report_data.report_type,
       filename: report_data.filename,
       download_url: "/reports/download/#{report_data.filename}"
+    })
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:report_error, error_data}, socket) do
+    Logger.error("Report generation error for membership #{socket.assigns.membership_id}: #{error_data.message}")
+
+    # Push error notification to client
+    push(socket, "error", %{
+      message: error_data.message
     })
 
     {:noreply, socket}

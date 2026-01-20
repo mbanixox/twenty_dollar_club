@@ -42,7 +42,7 @@ defmodule TwentyDollarClub.Jobs.ReportGeneratorWorker do
          {:ok, path} <- save_report(workbook, report_type) do
       Logger.info("Report generated successfully: #{path}")
 
-      # Broadcast to ALL members on the report channel (they can filter if needed)
+      # Broadcast to the report channel
       Phoenix.PubSub.broadcast(
         TwentyDollarClub.PubSub,
         "report:#{membership_id}",
@@ -58,6 +58,14 @@ defmodule TwentyDollarClub.Jobs.ReportGeneratorWorker do
     else
       {:error, reason} ->
         Logger.error("Failed to generate report: #{inspect(reason)}")
+
+        # Broadcast error to channel
+        Phoenix.PubSub.broadcast(
+          TwentyDollarClub.PubSub,
+          "report:#{membership_id}",
+          {:report_error, %{message: "Failed to generate report: #{inspect(reason)}"}}
+        )
+
         {:error, reason}
     end
   end
