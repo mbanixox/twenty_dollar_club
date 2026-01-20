@@ -39,7 +39,7 @@ defmodule TwentyDollarClubWeb.Endpoint do
   end
 
   plug Corsica,
-    origins: ["http://localhost:3000"],
+    origins: ["http://localhost:3000", "http://192.168.100.216:3000"],
     allow_headers: ["Content-Type", "Authorization"],
     allow_credentials: true
 
