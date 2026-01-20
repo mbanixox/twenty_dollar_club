@@ -7,7 +7,7 @@ config :twenty_dollar_club, TwentyDollarClubWeb.Endpoint,
   force_ssl: [rewrite_on: [:x_forwarded_proto]],
   exclude: [
     # paths: ["/health"],
-    hosts: ["localhost", "127.0.0.1"]
+    hosts: ["localhost", "127.0.0.1", "192.168.100.216"]
   ]
 
 # Do not print debug messages in production
