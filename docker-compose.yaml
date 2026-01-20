@@ -5,7 +5,7 @@ services:
       - "4000:4000"
     environment:
       - PHX_SERVER=true
-      - PHX_HOST=localhost
+      - PHX_HOST=${PHX_HOST}
       - PORT=4000
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
