@@ -6,7 +6,7 @@ defmodule TwentyDollarClub.Beneficiaries.Beneficiary do
   @foreign_key_type :binary_id
   schema "beneficiaries" do
     field :beneficiary_name, :string
-    field :relationship, :string
+    field :relationship, Ecto.Enum, values: [:spouse, :child, :parent, :sibling, :relative, :friend]
     belongs_to :membership, TwentyDollarClub.Memberships.Membership
 
     timestamps(type: :utc_datetime)

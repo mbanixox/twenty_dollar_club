@@ -13,10 +13,11 @@ defmodule TwentyDollarClubWeb.Endpoint do
 
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]],
-    longpoll: [connect_info: [session: @session_options]]
+    longpoll: [connect_info: [session: @session_options]],
+    check_origin: ["http://localhost:3000", "http://192.168.100.216:3000"]
 
   socket "/socket", TwentyDollarClubWeb.UserSocket,
-    websocket: true,
+    websocket: [check_origin: ["http://localhost:3000", "http://192.168.100.216:3000"]],
     longpoll: false
 
   # Serve at "/" the static files from "priv/static" directory.
