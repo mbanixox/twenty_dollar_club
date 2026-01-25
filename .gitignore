@@ -27,3 +27,5 @@ twenty_dollar_club-*.tar
 
 .env
 .env.*.local
+
+/.vscode/

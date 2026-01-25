@@ -217,6 +217,7 @@ defmodule TwentyDollarClub.Jobs.PaymentCallbackWorker do
       nil ->
         Logger.info("Creating membership for user_id=#{user.id}")
         Memberships.create_membership(user, %{"role" => "member"})
+        Users.activate_user_membership(user.id)
 
       membership ->
         Logger.debug("User already has a membership (id=#{membership.id})")

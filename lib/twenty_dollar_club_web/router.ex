@@ -76,6 +76,7 @@ defmodule TwentyDollarClubWeb.Router do
     post "/users/sign_out", UserController, :sign_out
     patch "/users/update", UserController, :update
     delete "/users/delete", UserController, :delete
+    get "/users/membership_status/:id", UserController, :check_membership_status
 
     post "/payments/membership", PaymentController, :create_membership_mpesa
   end
@@ -112,6 +113,10 @@ defmodule TwentyDollarClubWeb.Router do
 
   scope "/api/admin", TwentyDollarClubWeb do
     pipe_through [:api, :admin_auth]
+
+    get "/users/pending", UserController, :list_pending
+    patch "/users/approve/:id", UserController, :approve_user_membership
+    patch "/users/reject/:id", UserController, :reject_user_membership
 
     patch "/memberships/update/:id", MembershipController, :update
 

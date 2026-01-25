@@ -30,6 +30,7 @@ defmodule TwentyDollarClubWeb.UserJSON do
       email: user.email,
       phone_number: user.phone_number,
       gender: user.gender,
+      membership_status: user.membership_status,
       membership: render_membership(user)
     }
   end

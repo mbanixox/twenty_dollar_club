@@ -10,7 +10,7 @@ defmodule TwentyDollarClubWeb.UserController do
   alias TwentyDollarClubWeb.{Auth.Guardian, Auth.ErrorResponse}
 
   import TwentyDollarClubWeb.Auth.AuthorizedPlug
-  plug :is_authorized_user when action in [:update, :delete]
+  plug :is_authorized_user when action in [:check_membership_status, :update, :delete]
 
   action_fallback TwentyDollarClubWeb.FallbackController
 
@@ -20,6 +20,34 @@ defmodule TwentyDollarClubWeb.UserController do
   def index(conn, _params) do
     users = Users.list_users()
     render(conn, :index, users: users)
+  end
+
+  @doc """
+  Lists all users with pending membership status.
+  """
+  def list_pending(conn, _params) do
+    users = Users.list_pending_users()
+    render(conn, :index, users: users)
+  end
+
+  def approve_user_membership(conn, %{"id" => id}) do
+    with {:ok, %User{} = user} <- Users.approve_user_membership(id) do
+      render(conn, :show, user: user)
+    end
+  end
+
+  def check_membership_status(conn, %{"id" => id}) do
+    with {:ok, status} <- Users.get_membership_status(id) do
+      conn
+      |> put_status(:ok)
+      |> json(%{membership_status: status})
+    end
+  end
+
+  def reject_user_membership(conn, %{"id" => id}) do
+    with {:ok, %User{} = user} <- Users.reject_user_membership(id) do
+      render(conn, :show, user: user)
+    end
   end
 
   @doc """

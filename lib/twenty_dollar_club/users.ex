@@ -23,6 +23,42 @@ defmodule TwentyDollarClub.Users do
     Repo.all(User)
   end
 
+  def list_pending_users do
+    from(u in User,
+      where: u.membership_status == ^:pending
+    )
+    |> Repo.all()
+  end
+
+  def activate_user_membership(user_id) do
+    user = get_user!(user_id)
+
+    user
+    |> User.changeset(%{membership_status: :active})
+    |> Repo.update()
+  end
+
+  def get_membership_status(user_id) do
+    user = get_user!(user_id)
+    {:ok, user.membership_status}
+  end
+
+  def approve_user_membership(user_id) do
+    user = get_user!(user_id)
+
+    user
+    |> User.changeset(%{membership_status: :approved})
+    |> Repo.update()
+  end
+
+  def reject_user_membership(user_id) do
+    user = get_user!(user_id)
+
+    user
+    |> User.changeset(%{membership_status: :rejected})
+    |> Repo.update()
+  end
+
   def list_users_with_memberships do
     from(u in User,
       join: m in assoc(u, :membership),

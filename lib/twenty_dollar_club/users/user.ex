@@ -11,6 +11,7 @@ defmodule TwentyDollarClub.Users.User do
     field :hashed_password, :string
     field :phone_number, :string
     field :gender, :string
+    field :membership_status, Ecto.Enum, values: [:active, :inactive, :approved, :rejected, :pending], default: :pending
     has_one :membership, TwentyDollarClub.Memberships.Membership
 
     timestamps(type: :utc_datetime)
@@ -19,7 +20,7 @@ defmodule TwentyDollarClub.Users.User do
   @doc false
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:first_name, :last_name, :email, :hashed_password, :phone_number, :gender])
+    |> cast(attrs, [:first_name, :last_name, :email, :hashed_password, :phone_number, :gender, :membership_status])
     |> validate_required([
       :first_name,
       :last_name,
