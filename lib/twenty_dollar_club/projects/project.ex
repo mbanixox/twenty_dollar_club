@@ -22,4 +22,11 @@ defmodule TwentyDollarClub.Projects.Project do
     |> cast(attrs, [:title, :description, :status, :goal_amount, :funded_amount])
     |> validate_required([:title, :description, :status, :goal_amount, :funded_amount])
   end
+
+  def create_changeset(project, attrs) do
+    project
+    |> cast(attrs, [:title, :description, :status, :goal_amount, :funded_amount])
+    |> validate_required([:title, :description, :status, :goal_amount, :funded_amount])
+    |> put_change(:membership_id, attrs["membership_id"])
+  end
 end

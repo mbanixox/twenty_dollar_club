@@ -31,6 +31,7 @@ defmodule TwentyDollarClubWeb.UserJSON do
       phone_number: user.phone_number,
       gender: user.gender,
       membership_status: user.membership_status,
+      inserted_at: user.inserted_at,
       membership: render_membership(user)
     }
   end

@@ -15,7 +15,11 @@ defmodule TwentyDollarClubWeb.ProjectController do
   end
 
   def create(conn, %{"project" => project_params}) do
-    with {:ok, %Project{} = project} <- Projects.create_project(project_params) do
+    membership_id = conn.assigns.user.membership.id
+
+    attrs = Map.put(project_params, "membership_id", membership_id)
+
+    with {:ok, %Project{} = project} <- Projects.create_project(attrs) do
       conn
       |> put_status(:created)
       |> render(:show, project: project)
