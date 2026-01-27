@@ -3,6 +3,7 @@ defmodule TwentyDollarClubWeb.UserSocket do
 
   channel "payment:*", TwentyDollarClubWeb.PaymentChannel
   channel "report:*", TwentyDollarClubWeb.ReportChannel
+  channel "notifications:*", TwentyDollarClubWeb.NotificationChannel
 
   @impl true
   def connect(_params, socket, _connect_info) do
