@@ -7,34 +7,31 @@ defmodule TwentyDollarClubWeb.NotificationController do
   action_fallback TwentyDollarClubWeb.FallbackController
 
   def index(conn, _params) do
-    notifications = Notifications.list_notifications()
+    role = conn.assigns.user.membership.role
+    membership_id = conn.assigns.user.membership.id
+    notifications = Notifications.list_notifications_for_role(role, membership_id)
     render(conn, :index, notifications: notifications)
   end
 
-  def create(conn, %{"notification" => notification_params}) do
-    with {:ok, %Notification{} = notification} <- Notifications.create_notification(notification_params) do
-      conn
-      |> put_status(:created)
-      |> put_resp_header("location", ~p"/api/notifications/#{notification}")
-      |> render(:show, notification: notification)
-    end
-  end
-
   def show(conn, %{"id" => id}) do
-    notification = Notifications.get_notification!(id)
+    membership_id = conn.assigns.user.membership.id
+    notification = Notifications.get_notification_for_member!(id, membership_id)
     render(conn, :show, notification: notification)
   end
 
   def update(conn, %{"id" => id, "notification" => notification_params}) do
-    notification = Notifications.get_notification!(id)
+    membership_id = conn.assigns.user.membership.id
+    notification = Notifications.get_notification_for_member!(id, membership_id)
 
-    with {:ok, %Notification{} = notification} <- Notifications.update_notification(notification, notification_params) do
+    with {:ok, %Notification{} = notification} <-
+           Notifications.update_notification_read(notification, notification_params) do
       render(conn, :show, notification: notification)
     end
   end
 
   def delete(conn, %{"id" => id}) do
-    notification = Notifications.get_notification!(id)
+    membership_id = conn.assigns.user.membership.id
+    notification = Notifications.get_notification_for_member!(id, membership_id)
 
     with {:ok, %Notification{}} <- Notifications.delete_notification(notification) do
       send_resp(conn, :no_content, "")

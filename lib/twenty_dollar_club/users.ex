@@ -7,6 +7,8 @@ defmodule TwentyDollarClub.Users do
 
   alias TwentyDollarClub.Repo
   alias TwentyDollarClub.Users.User
+  alias TwentyDollarClub.Notifications
+  alias TwentyDollarClub.Memberships.Membership
 
   require Logger
 
@@ -126,7 +128,33 @@ defmodule TwentyDollarClub.Users do
     %User{}
     |> User.changeset(attrs)
     |> Repo.insert()
+    |> notify_new_user()
   end
+
+  defp notify_new_user({:ok, user}) do
+    member_ids =
+      Membership
+      |> Repo.all()
+      |> Enum.filter(fn m -> m.role in [:admin, :super_admin] end)
+      |> Enum.map(& &1.id)
+
+    Enum.each(member_ids, fn membership_id ->
+      Notifications.create_notification(
+        %{
+          event: :pending_membership_approval,
+          message: "A new user has registered.",
+          severity: :medium,
+          recipient_type: :admin,
+          resource_type: :membership
+        },
+        membership_id
+      )
+    end)
+
+    {:ok, user}
+  end
+
+  defp notify_new_user(error), do: error
 
   @doc """
   Updates a user.
@@ -182,10 +210,10 @@ defmodule TwentyDollarClub.Users do
       nil ->
         Logger.debug("User has no active membership")
         {:ok, user}
+
       _membership ->
         Logger.warning("User already has an active membership")
         {:error, :already_has_membership}
     end
   end
-
 end

@@ -4,6 +4,7 @@ defmodule TwentyDollarClub.Notifications do
   """
 
   import Ecto.Query, warn: false
+  import Ecto.Changeset
   alias TwentyDollarClub.Repo
 
   alias TwentyDollarClub.Notifications.Notification
@@ -21,6 +22,20 @@ defmodule TwentyDollarClub.Notifications do
     Repo.all(Notification)
   end
 
+  def list_notifications_for_role(role, membership_id) do
+    import Ecto.Query
+
+    Notification
+    |> where([n], n.recipient_type in ^recipient_types_for_role(role))
+    |> where([n], n.membership_id == ^membership_id)
+    |> Repo.all()
+  end
+
+  defp recipient_types_for_role(:admin), do: [:member, :admin]
+  defp recipient_types_for_role(:super_admin), do: [:member, :admin, :super_admin]
+  defp recipient_types_for_role(:member), do: [:member]
+  defp recipient_types_for_role(_), do: []
+
   @doc """
   Gets a single notification.
 
@@ -37,21 +52,26 @@ defmodule TwentyDollarClub.Notifications do
   """
   def get_notification!(id), do: Repo.get!(Notification, id)
 
+  def get_notification_for_member!(id, membership_id) do
+    Repo.get_by!(Notification, id: id, membership_id: membership_id)
+  end
+
   @doc """
   Creates a notification.
 
   ## Examples
 
-      iex> create_notification(%{field: value})
+      iex> create_notification(%{field: value}, membership_id)
       {:ok, %Notification{}}
 
-      iex> create_notification(%{field: bad_value})
+      iex> create_notification(%{field: bad_value}, membership_id)
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_notification(attrs) do
+  def create_notification(attrs, membership_id) do
     %Notification{}
     |> Notification.changeset(attrs)
+    |> put_change(:membership_id, membership_id)
     |> Repo.insert()
   end
 
@@ -70,6 +90,12 @@ defmodule TwentyDollarClub.Notifications do
   def update_notification(%Notification{} = notification, attrs) do
     notification
     |> Notification.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def update_notification_read(%Notification{} = notification, attrs) do
+    notification
+    |> Notification.read_changeset(attrs)
     |> Repo.update()
   end
 

@@ -109,6 +109,10 @@ defmodule TwentyDollarClubWeb.Router do
 
     post "/reports/generate", ReportController, :generate
     get "/reports/download/:filename", ReportController, :download
+
+    get "/notifications", NotificationController, :index
+    patch "/notifications/:id", NotificationController, :update
+    delete "/notifications/:id", NotificationController, :delete
   end
 
   scope "/api/admin", TwentyDollarClubWeb do

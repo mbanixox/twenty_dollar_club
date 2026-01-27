@@ -22,7 +22,9 @@ defmodule TwentyDollarClubWeb.NotificationJSON do
       message: notification.message,
       read: notification.read,
       severity: notification.severity,
-      recipient_type: notification.recipient_type
+      recipient_type: notification.recipient_type,
+      resource_type: notification.resource_type,
+      inserted_at: notification.inserted_at,
     }
   end
 end
